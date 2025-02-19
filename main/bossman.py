@@ -10,9 +10,6 @@ from llama_index.tools.azure_code_interpreter import AzureCodeInterpreterToolSpe
 
 app = Flask(__name__)
 
-# Configuration
-SANDBOX_URL = "http://sandbox-container:5000/execute"  # Points to the sandbox container internally
-
 llm = AzureOpenAI(
     model=os.getenv('MODEL_NAME', ''),
     deployment_name=os.getenv('MODEL_DEPLOYMENT_NAME', ''),
@@ -29,7 +26,7 @@ azure_code_interpreter_spec = AzureCodeInterpreterToolSpec(
 # Create the ReActAgent and inject the custom tool
 agent = ReActAgent.from_tools(azure_code_interpreter_spec.to_tool_list(), llm=llm, verbose=True)
 
-@app.route("/prompt", methods=["POST"])  # Changed endpoint from /execute to /prompt
+@app.route("/prompt", methods=["POST"])
 def prompt():
     """Receives a prompt, generates Python code with LLM, and executes it in the sandbox."""
     try:
@@ -38,13 +35,12 @@ def prompt():
         if not prompt:
             return jsonify({"error": "Prompt is required"}), 400
 
-        # Query the agent to generate and execute Python code
         response = agent.chat(prompt)
-        if not isinstance(response, (dict, list)):  # If not JSON-compatible, convert to string
+        if not isinstance(response, (dict, list)):
             response = str(response)
         return jsonify({"response": response}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000, debug=True)  # Flask server listens on port 5001
+    app.run(host="0.0.0.0", port=8000, debug=True) 
