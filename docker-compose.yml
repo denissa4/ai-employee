@@ -1,0 +1,28 @@
+version: "3.8"
+
+services:
+  sandbox:
+    build:
+      context: ./sandbox  # Build from the Dockerfile in the sandbox folder
+    container_name: sandbox-container
+    networks:
+      - sandbox_network
+    env_file:
+      - .env
+
+  script:
+    build:
+      context: ./app  # Build from the Dockerfile in the app folder
+    container_name: main-container
+    depends_on:
+      - sandbox
+    networks:
+      - sandbox_network
+    ports:
+      - "8000:8000"  # Expose port 8000 for the main server
+    env_file:
+      - .env
+
+networks:
+  sandbox_network:
+    driver: bridge
