@@ -1,24 +1,17 @@
-# Use a base Python image
-FROM python:3.11
+# Base image
+FROM python:3.10
 
-# Set the working directory in the container
+# Set the working directory
 WORKDIR /main
 
 # Copy all files from the ai-employee directory to /main in the container
 COPY . /main/
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    python3-dev \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt gunicorn
 
-# Install Python dependencies from requirements.txt (make sure requirements.txt is present in ai-employee)
-COPY requirements.txt /main/
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Expose port 8000 for the Flask app
+# Expose port
 EXPOSE 8000
 
-# Run the Flask app directly with Python
-CMD ["python3", "bossman.py"]
+# Start the app with Gunicorn
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8000", "bossman:app"]
