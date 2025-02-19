@@ -5,6 +5,9 @@ from llama_index.core.agent import ReActAgent
 from llama_index.llms.azure_openai import AzureOpenAI
 import os
 
+from llama_index.tools.azure_code_interpreter import AzureCodeInterpreterToolSpec
+
+
 app = Flask(__name__)
 
 # Configuration
@@ -18,23 +21,13 @@ llm = AzureOpenAI(
     api_version=os.getenv('MODEL_VERSION', ''),
 )
 
-def execute_python_code(code: str):
-    """Sends Python code to the sandbox container for execution and returns the output."""
-    try:
-        response = requests.post(SANDBOX_URL, json={"code": code}, timeout=5)
-        return response.json().get("output", "No output received")
-    except Exception as e:
-        return f"Execution error: {e}"
-
-# Wrap function in a ReAct-compatible tool
-execute_tool = FunctionTool.from_defaults(
-    name="execute_python",
-    fn=execute_python_code,
-    description="Executes Python code in a sandbox container and returns the output.",
+azure_code_interpreter_spec = AzureCodeInterpreterToolSpec(
+    pool_management_endpoint=os.getenv('POOL_MANAGEMENT_ENDPOINT', ''),
+    local_save_path=".",
 )
 
 # Create the ReActAgent and inject the custom tool
-agent = ReActAgent.from_tools([execute_tool], llm=llm, verbose=True)
+agent = ReActAgent.from_tools(azure_code_interpreter_spec.to_tool_list(), llm=llm, verbose=True)
 
 @app.route("/prompt", methods=["POST"])  # Changed endpoint from /execute to /prompt
 def prompt():
