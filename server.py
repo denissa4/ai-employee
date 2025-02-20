@@ -5,7 +5,7 @@ from flask import Flask, request, jsonify
 from llama_index.core.agent import ReActAgent
 from llama_index.core.tools import FunctionTool
 from llama_index.llms.azure_openai import AzureOpenAI
-from botbuilder.core import BotFrameworkAdapter, Activity
+from botbuilder.schema import Activity  # Correct import for Activity
 from botbuilder.integration.aiohttp import BotFrameworkHttpAdapter
 from bot import EmployeeBot  # Assuming EmployeeBot is defined in bot.py
 
@@ -70,7 +70,7 @@ def messages():
     """Handles messages from Azure Bot Service."""
     try:
         body = request.json
-        activity = Activity().deserialize(body)
+        activity = Activity().deserialize(body)  # Correctly using botbuilder.schema.Activity
         auth_header = request.headers.get("Authorization", "")
 
         # Send the user message to /prompt endpoint
