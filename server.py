@@ -5,12 +5,6 @@ from flask import Flask, request, jsonify
 from llama_index.core.agent import ReActAgent
 from llama_index.core.tools import FunctionTool
 from llama_index.llms.azure_openai import AzureOpenAI
-from botbuilder.schema import Activity
-from botbuilder.core import TurnContext, BotFrameworkAdapterSettings
-from botbuilder.integration.aiohttp import BotFrameworkHttpAdapter
-from bot import EmployeeBot
-from azure.identity import DefaultAzureCredential
-import asyncio
 
 app = Flask(__name__)
 
@@ -43,33 +37,20 @@ execute_tool = FunctionTool.from_defaults(
 # Create the ReActAgent and inject the custom tool
 agent = ReActAgent.from_tools([execute_tool], llm=llm, verbose=True)
 
-# Use DefaultAzureCredential for authentication
-adapter_settings = BotFrameworkAdapterSettings(
-    app_id=os.getenv('MICROSOFT_APP_ID', ''),
-    app_password=os.getenv('MICROSOFT_APP_PASSWORD', '')
-)
-
-# Create an adapter with DefaultAzureCredential
-adapter = BotFrameworkHttpAdapter(adapter_settings, credential=DefaultAzureCredential())
-
-# Initialize Bot
-bot = EmployeeBot(agent)  # Pass the agent to EmployeeBot
-
-@app.route("/api/messages", methods=["POST"])
-def messages():
+@app.route("/prompt", methods=["POST"])
+def prompt():
     """Handles messages from Azure Bot, processes with LLM, and responds."""
     try:
-        body = request.json
-        activity = Activity().deserialize(body)
-        auth_header = request.headers.get("Authorization", "")
-
-        async def call_bot(turn_context: TurnContext):
-            await bot.on_turn(turn_context)
-
-        # Use asyncio.run to await the asynchronous process_activity
-        asyncio.run(adapter.process_activity(activity, auth_header, call_bot))
-
-        return jsonify({"status": "message processed"}), 200
+        data = request.json
+        prompt = data.get("prompt")
+        if not prompt:
+            return jsonify({"error": "Prompt is required"}), 400
+        logging.info(f"USER PROMPT: {prompt}")
+        # Query the agent to generate and execute Python code
+        response = agent.chat(prompt)
+        if not isinstance(response, (dict, list)):  # If not JSON-compatible, convert to string
+            response = str(response)
+        return jsonify({"response": response}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
