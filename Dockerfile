@@ -38,7 +38,4 @@ npm run build
 # Ensure the supervisord configuration is copied
 COPY supervisord.conf /app/supervisord.conf
 
-# Expose port 8000
-EXPOSE 8000
-
 CMD ["/usr/bin/supervisord", "-c", "/app/supervisord.conf"]
