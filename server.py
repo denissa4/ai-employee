@@ -9,6 +9,7 @@ from botbuilder.schema import Activity
 from botbuilder.core import TurnContext, BotFrameworkAdapterSettings
 from botbuilder.integration.aiohttp import BotFrameworkHttpAdapter
 from bot import EmployeeBot
+import asyncio
 
 app = Flask(__name__)
 
@@ -41,7 +42,6 @@ execute_tool = FunctionTool.from_defaults(
 # Create the ReActAgent and inject the custom tool
 agent = ReActAgent.from_tools([execute_tool], llm=llm, verbose=True)
 
-
 adapter_settings = BotFrameworkAdapterSettings(
     app_id=os.getenv('MICROSOFT_APP_ID', ''),  # Replace with your Microsoft App ID
     app_password=os.getenv('MICROSOFT_APP_PASSWORD', '')  # Replace with your Microsoft App Password
@@ -61,7 +61,8 @@ def messages():
         async def call_bot(turn_context: TurnContext):
             await bot.on_turn(turn_context)
 
-        adapter.process_activity(activity, auth_header, call_bot)
+        # Use asyncio.run to await the asynchronous process_activity
+        asyncio.run(adapter.process_activity(activity, auth_header, call_bot))
 
         return jsonify({"status": "message processed"}), 200
     except Exception as e:
