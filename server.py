@@ -5,7 +5,7 @@ from flask import Flask, request, jsonify
 from llama_index.core.agent import ReActAgent
 from llama_index.core.tools import FunctionTool
 from llama_index.llms.azure_openai import AzureOpenAI
-from botbuilder.core import BotFrameworkAdapter, BotFrameworkAdapterSettings, Activity
+from botbuilder.core import BotFrameworkAdapter, Activity
 from botbuilder.integration.aiohttp import BotFrameworkHttpAdapter
 from bot import EmployeeBot  # Assuming EmployeeBot is defined in bot.py
 
@@ -60,12 +60,8 @@ def prompt():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Set up bot framework adapter
-APP_ID = os.getenv("MICROSOFT_APP_ID", "")
-APP_PASSWORD = os.getenv("MICROSOFT_APP_PASSWORD", "")
-
-adapter_settings = BotFrameworkAdapterSettings(APP_ID, APP_PASSWORD)
-adapter = BotFrameworkHttpAdapter(adapter_settings)
+# Initialize Bot Framework Adapter (no need for app_id and app_password with managed identity)
+adapter = BotFrameworkHttpAdapter()
 
 bot = EmployeeBot()
 
