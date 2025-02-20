@@ -2,18 +2,19 @@ import { ActivityHandler, TurnContext } from 'botbuilder';
 import axios from 'axios';
 import { DefaultAzureCredential } from '@azure/identity';
 
-interface BotConfig {
+interface BotOptions {
     debug: boolean;
     nlApiUrl: string;
 }
 
 class Bot extends ActivityHandler {
-    private config: BotConfig;
+    private nlApiUrl: string;
+    private debug: boolean;
 
-    // Accept the config object in the constructor
-    constructor(config: BotConfig) {
+    constructor(options: BotOptions) {
         super();
-        this.config = config;
+        this.nlApiUrl = options.nlApiUrl;
+        this.debug = options.debug;
 
         this.onMessage(async (context: TurnContext, next) => {
             const userMessage = context.activity.text;
@@ -35,7 +36,7 @@ class Bot extends ActivityHandler {
             const tokenCredential = new DefaultAzureCredential();
             const accessToken = await tokenCredential.getToken("https://management.azure.com/.default");
 
-            const response = await axios.post(this.config.nlApiUrl, {
+            const response = await axios.post(this.nlApiUrl, {
                 prompt: userMessage
             }, {
                 headers: {
