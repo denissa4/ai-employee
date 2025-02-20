@@ -2,10 +2,10 @@
 FROM python:3.11
 
 # Set the working directory in the container
-WORKDIR /main
+WORKDIR /
 
-# Copy all files from the ai-employee directory to /main in the container
-COPY . /main/
+# Copy all files from the ai-employee directory to the root directory in the container
+COPY . /
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies from requirements.txt (ensure requirements.txt includes gunicorn)
-COPY requirements.txt /main/
+COPY requirements.txt /
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Expose port 8000 for the Flask app
