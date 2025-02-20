@@ -1,16 +1,18 @@
 import os
-import requests
 import logging
+import requests
 from flask import Flask, request, jsonify
 from llama_index.core.agent import ReActAgent
 from llama_index.core.tools import FunctionTool
 from llama_index.llms.azure_openai import AzureOpenAI
-from botbuilder.schema import Activity  # Correct import for Activity
+from botbuilder.schema import Activity
+from botbuilder.core import TurnContext
 from botbuilder.integration.aiohttp import BotFrameworkHttpAdapter
-from bot import EmployeeBot  # Assuming EmployeeBot is defined in bot.py
+from bot import EmployeeBot
 
 app = Flask(__name__)
 
+# Load environment variables
 SANDBOX_URL = os.getenv('SANDBOX_ENDPOINT', '')
 
 llm = AzureOpenAI(
@@ -21,7 +23,7 @@ llm = AzureOpenAI(
     api_version=os.getenv('MODEL_VERSION', ''),
 )
 
-# Function to execute Python code
+# Function to execute Python code in a sandbox
 def execute_python_code(code: str):
     try:
         response = requests.post(SANDBOX_URL, json={"code": code}, timeout=120)
@@ -29,7 +31,7 @@ def execute_python_code(code: str):
     except Exception as e:
         return f"Execution error: {e}"
 
-# Wrap function in a ReAct-compatible tool
+# Create ReAct-compatible tool
 execute_tool = FunctionTool.from_defaults(
     name="execute_python",
     fn=execute_python_code,
@@ -39,56 +41,22 @@ execute_tool = FunctionTool.from_defaults(
 # Create the ReActAgent and inject the custom tool
 agent = ReActAgent.from_tools([execute_tool], llm=llm, verbose=True)
 
-@app.route("/prompt", methods=["POST"])
-def prompt():
-    """Receives a prompt, generates Python code with LLM, and executes it in the sandbox."""
-    try:
-        data = request.json
-        prompt = data.get("prompt")
-        if not prompt:
-            return jsonify({"error": "Prompt is required"}), 400
-        
-        logging.info(f"USER PROMPT: {prompt}")
-
-        response = agent.chat(prompt)
-        if not isinstance(response, (dict, list)):
-            response = str(response)
-
-        logging.info(f"RESPONSE: {response}")
-        
-        return jsonify({"response": response}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-# Initialize Bot Framework Adapter (no need for app_id and app_password with managed identity)
+# Initialize Azure Bot Framework Adapter & Bot
 adapter = BotFrameworkHttpAdapter()
-
-bot = EmployeeBot()
+bot = EmployeeBot(agent)  # Pass the agent to EmployeeBot
 
 @app.route("/api/messages", methods=["POST"])
 def messages():
-    """Handles messages from Azure Bot Service."""
+    """Handles messages from Azure Bot, processes with LLM, and responds."""
     try:
         body = request.json
-        activity = Activity().deserialize(body)  # Correctly using botbuilder.schema.Activity
+        activity = Activity().deserialize(body)
         auth_header = request.headers.get("Authorization", "")
 
-        # Send the user message to /prompt endpoint
-        prompt_data = {
-            "prompt": activity.text  # Take the user's message as the prompt
-        }
+        async def call_bot(turn_context: TurnContext):
+            await bot.on_turn(turn_context)
 
-        # Forward the message to /prompt for processing
-        response = requests.post(f'http://localhost:8000/prompt', json=prompt_data)
-
-        if response.status_code == 200:
-            prompt_response = response.json().get('response', 'No response')
-            activity.text = prompt_response  # Set the bot response based on /prompt response
-        else:
-            activity.text = "Failed to process the prompt."
-
-        # Now send the bot's response back to the user
-        response = adapter.process_activity(activity, auth_header, bot.on_turn)
+        adapter.process_activity(activity, auth_header, call_bot)
 
         return jsonify({"status": "message processed"}), 200
     except Exception as e:
