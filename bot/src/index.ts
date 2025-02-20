@@ -16,7 +16,7 @@ import { INodeSocket } from "botframework-streaming";
 import { CloudAdapter, ConfigurationServiceClientCredentialFactory, createBotFrameworkAuthenticationFromConfiguration } from "botbuilder";
 
 // This bot's main dialog.
-import { Bot } from "./bot";
+import Bot from "./bot";
 
 // Enable debug
 import { setLogLevel } from "@azure/logger";
