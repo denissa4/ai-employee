@@ -47,6 +47,7 @@ agent = ReActAgent.from_tools([execute_tool], llm=llm, verbose=True)
 adapter_settings = BotFrameworkAdapterSettings(
     app_id=os.getenv('MICROSOFT_APP_ID', ''),
     app_password=os.getenv('MICROSOFT_APP_PASSWORD', '')
+)
 
 # Create an adapter with DefaultAzureCredential
 adapter = BotFrameworkHttpAdapter(adapter_settings, credential=DefaultAzureCredential())
