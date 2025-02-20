@@ -9,6 +9,7 @@ from botbuilder.schema import Activity
 from botbuilder.core import TurnContext, BotFrameworkAdapterSettings
 from botbuilder.integration.aiohttp import BotFrameworkHttpAdapter
 from bot import EmployeeBot
+from azure.identity import DefaultAzureCredential
 import asyncio
 
 app = Flask(__name__)
@@ -42,12 +43,15 @@ execute_tool = FunctionTool.from_defaults(
 # Create the ReActAgent and inject the custom tool
 agent = ReActAgent.from_tools([execute_tool], llm=llm, verbose=True)
 
+# Use DefaultAzureCredential for authentication
 adapter_settings = BotFrameworkAdapterSettings(
-    app_id=os.getenv('MICROSOFT_APP_ID', ''),  # Replace with your Microsoft App ID
-    app_password=os.getenv('MICROSOFT_APP_PASSWORD', '')  # Replace with your Microsoft App Password
-)
-# Initialize Azure Bot Framework Adapter & Bot
-adapter = BotFrameworkHttpAdapter(adapter_settings)
+    app_id=os.getenv('MICROSOFT_APP_ID', ''),
+    app_password=os.getenv('MICROSOFT_APP_PASSWORD', '')
+
+# Create an adapter with DefaultAzureCredential
+adapter = BotFrameworkHttpAdapter(adapter_settings, credential=DefaultAzureCredential())
+
+# Initialize Bot
 bot = EmployeeBot(agent)  # Pass the agent to EmployeeBot
 
 @app.route("/api/messages", methods=["POST"])
