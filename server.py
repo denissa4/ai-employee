@@ -6,7 +6,7 @@ from llama_index.core.agent import ReActAgent
 from llama_index.core.tools import FunctionTool
 from llama_index.llms.azure_openai import AzureOpenAI
 from botbuilder.schema import Activity
-from botbuilder.core import TurnContext
+from botbuilder.core import TurnContext, BotFrameworkAdapterSettings
 from botbuilder.integration.aiohttp import BotFrameworkHttpAdapter
 from bot import EmployeeBot
 
@@ -41,8 +41,13 @@ execute_tool = FunctionTool.from_defaults(
 # Create the ReActAgent and inject the custom tool
 agent = ReActAgent.from_tools([execute_tool], llm=llm, verbose=True)
 
+
+adapter_settings = BotFrameworkAdapterSettings(
+    app_id=os.getenv('MICROSOFT_APP_ID', ''),  # Replace with your Microsoft App ID
+    app_password=os.getenv('MICROSOFT_APP_PASSWORD', '')  # Replace with your Microsoft App Password
+)
 # Initialize Azure Bot Framework Adapter & Bot
-adapter = BotFrameworkHttpAdapter()
+adapter = BotFrameworkHttpAdapter(adapter_settings)
 bot = EmployeeBot(agent)  # Pass the agent to EmployeeBot
 
 @app.route("/api/messages", methods=["POST"])
