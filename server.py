@@ -55,7 +55,7 @@ direct_line_tool = FunctionTool.from_defaults(
 )
 
 # Create the ReActAgent and inject the custom tool
-agent = ReActAgent.from_tools([execute_tool], llm=llm, verbose=True)
+agent = ReActAgent.from_tools([execute_tool, direct_line_tool], llm=llm, verbose=True)
 
 @app.route("/prompt", methods=["POST"])
 def prompt():
