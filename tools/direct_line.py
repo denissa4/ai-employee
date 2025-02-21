@@ -71,6 +71,8 @@ async def send_and_receive_message(secret, message):
         if conversation_id:
             await send_message(client, conversation_id, message, headers)
             await asyncio.sleep(2)  # Wait for the bot to respond
-            return await get_bot_reply(client, conversation_id, headers)
+            res = await get_bot_reply(client, conversation_id, headers)
+            print(f"Response: {res}")
+            return res
         return None
 
