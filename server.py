@@ -37,7 +37,8 @@ llm = AzureOpenAI(
     api_version=os.getenv('MODEL_VERSION', ''),
 )
 
-# Function to execute Python code in a sandbox
+# Create ReAct-compatible tools
+
 def execute_python_code(code: str):
     try:
         response = requests.post(SANDBOX_URL, json={"code": code}, timeout=120)
@@ -45,11 +46,16 @@ def execute_python_code(code: str):
     except Exception as e:
         return f"Execution error: {e}"
 
-# Create ReAct-compatible tool
+# Tool to use sandbox to execute python code
 execute_tool = FunctionTool.from_defaults(
     name="execute_python",
     fn=execute_python_code,
-    description="Executes Python code in a sandbox container and returns the output.",
+    description="""Executes Python code in a sandbox container and returns the output.
+
+    - **Use this tool whenever no specific tool is available for the requested task.**
+    - If the user requires **up-to-date information**, **always** use this tool instead of relying on your own knowledge—unless a more appropriate tool is available.
+    
+    This tool ensures that calculations, data processing, and external queries are executed in real-time.""",
 )
 
 def send_direct_line_message(dl_lantern: str, message: str):
@@ -64,12 +70,18 @@ direct_line_tool = FunctionTool.from_defaults(
     name="send_direct_line_message",
     fn=send_direct_line_message,
     description="""Sends a message to an Azure Direct Line bot and retrieves the response.
-    The dl_lantern argument should be os.getenv() with one of the following variables:
-    * 'RAISE_TALKS' - for talking about startups and entrepreneurship
-    * 'NLSQL' - for getting information from a database using natural language
-    make the best choice for the variable based on the users question.
-    The message should be a string to send to the bot.
-    The bots response will be the information returned from this tool."""
+    
+    The 'dl_lantern' argument should be dynamically chosen based on the user's question:
+    * 'AGENT' - for querying an LLM about documents stored in Azure Blob Storage.
+    * 'NLSQL' - for retrieving information from a database using natural language.
+    * 'STRUCTURIZER' - for organizing text data based on column names.
+    
+    Select the most appropriate variable automatically based on the intent of the user's query.
+    
+    The 'message' argument is the text to send to the bot.
+    
+    Always wait for the tool to return a response—it will **always** provide one.  
+    Your response to the user **must be exactly what the tool returns**, unless explicitly instructed otherwise."""
 )
 
 # Create the ReActAgent and inject the custom tool

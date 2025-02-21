@@ -75,4 +75,3 @@ async def send_and_receive_message(secret, message):
             print(f"Response: {res}")
             return res
         return None
-
