@@ -1,10 +1,13 @@
 import os
 import logging
 import requests
+import asyncio
 from flask import Flask, request, jsonify
 from llama_index.core.agent import ReActAgent
 from llama_index.core.tools import FunctionTool
 from llama_index.llms.azure_openai import AzureOpenAI
+# Import custom tools
+from tools.direct_line import chat_with_bot
 
 app = Flask(__name__)
 
@@ -32,6 +35,23 @@ execute_tool = FunctionTool.from_defaults(
     name="execute_python",
     fn=execute_python_code,
     description="Executes Python code in a sandbox container and returns the output.",
+)
+
+def send_direct_line_message(direct_line_secret: str, message: str):
+    """Sends a message to an Azure Direct Line bot and returns its response."""
+    try:
+        return asyncio.run(chat_with_bot(direct_line_secret, message))
+    except Exception as e:
+        return f"Error communicating with bot: {e}"
+
+# Direct Line tool - sends message to given bot and returns response
+direct_line_tool = FunctionTool.from_defaults(
+    name="send_direct_line_message",
+    fn=send_direct_line_message,
+    description="""Sends a message to an Azure Direct Line bot and retrieves the response.
+    The direct_line_secret should be provided as an environment variable using os.getenv().
+    The message should be a string to send to the bot.
+    The bots response will be the information returned from this tool."""
 )
 
 # Create the ReActAgent and inject the custom tool

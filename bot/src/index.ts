@@ -65,7 +65,7 @@ adapter.onTurnError = onTurnErrorHandler;
 // Create the main dialog.
 const nlBot = new Bot({
     debug: process.env.DEBUG === "true",
-    nlApiUrl: process.env.nlapiurl ?? "http://localhost:8000/prompt",
+    nlApiUrl: "http://localhost:8000/prompt",
 });
 
 console.log(process.env);
