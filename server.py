@@ -37,10 +37,10 @@ execute_tool = FunctionTool.from_defaults(
     description="Executes Python code in a sandbox container and returns the output.",
 )
 
-def send_direct_line_message(direct_line_secret: str, message: str):
+def send_direct_line_message(dl_lantern: str, message: str):
     """Sends a message to an Azure Direct Line bot and returns its response."""
     try:
-        return asyncio.run(chat_with_bot(direct_line_secret, message))
+        return asyncio.run(chat_with_bot(dl_lantern, message))
     except Exception as e:
         return f"Error communicating with bot: {e}"
 
@@ -49,7 +49,7 @@ direct_line_tool = FunctionTool.from_defaults(
     name="send_direct_line_message",
     fn=send_direct_line_message,
     description="""Sends a message to an Azure Direct Line bot and retrieves the response.
-    The direct_line_secret should be provided as an environment variable using os.getenv().
+    The dl_lantern argument should be 'os.getenv('RAISE_TALKS')'.
     The message should be a string to send to the bot.
     The bots response will be the information returned from this tool."""
 )
