@@ -1,3 +1,5 @@
+import asyncio
+import httpx
 ### Direct Line Bot Functions ###
 async def create_conversation(direct_line_secret):
     """Starts a new Direct Line conversation."""
