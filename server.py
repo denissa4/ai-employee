@@ -7,7 +7,7 @@ from llama_index.core.agent import ReActAgent
 from llama_index.core.tools import FunctionTool
 from llama_index.llms.azure_openai import AzureOpenAI
 # Import custom tools
-from tools.direct_line import chat_with_bot
+from tools.direct_line import send_and_receive_message
 
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
@@ -55,7 +55,7 @@ execute_tool = FunctionTool.from_defaults(
 def send_direct_line_message(dl_lantern: str, message: str):
     """Sends a message to an Azure Direct Line bot and returns its response."""
     try:
-        return asyncio.run(chat_with_bot(dl_lantern, message))
+        return asyncio.run(send_and_receive_message(dl_lantern, message))
     except Exception as e:
         return f"Error communicating with bot: {e}"
 
