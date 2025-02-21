@@ -9,6 +9,21 @@ from llama_index.llms.azure_openai import AzureOpenAI
 # Import custom tools
 from tools.direct_line import chat_with_bot
 
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
+
+azure_loggers = [
+    'azure',
+    'azure.core',
+    'azure.identity',
+    'azure.storage',
+    'azure.storage.blob',
+    'azure.storage.common',
+]
+
+for logger in azure_loggers:
+    l = logging.getLogger(logger)
+    l.setLevel(logging.ERROR)
+
 app = Flask(__name__)
 
 # Load environment variables
@@ -49,13 +64,19 @@ direct_line_tool = FunctionTool.from_defaults(
     name="send_direct_line_message",
     fn=send_direct_line_message,
     description="""Sends a message to an Azure Direct Line bot and retrieves the response.
-    The dl_lantern argument should be 'os.getenv('RAISE_TALKS')'.
+    The dl_lantern argument should be os.getenv() with one of the following variables:
+    * 'RAISE_TALKS' - for talking about startups and entrepreneurship
+    * 'NLSQL' - for getting information from a database using natural language
+    make the best choice for the variable based on the users question.
     The message should be a string to send to the bot.
     The bots response will be the information returned from this tool."""
 )
 
 # Create the ReActAgent and inject the custom tool
 agent = ReActAgent.from_tools([execute_tool, direct_line_tool], llm=llm, verbose=True)
+
+if DEBUG:
+    logging.info("AGENT CREATED AND READY TO CHAT")
 
 @app.route("/prompt", methods=["POST"])
 def prompt():
@@ -65,11 +86,14 @@ def prompt():
         prompt = data.get("prompt")
         if not prompt:
             return jsonify({"error": "Prompt is required"}), 400
-        logging.info(f"USER PROMPT: {prompt}")
+        if DEBUG:
+            logging.info(f"USER PROMPT: {prompt}")
         # Query the agent to generate and execute Python code
         response = agent.chat(prompt)
         if not isinstance(response, (dict, list)):  # If not JSON-compatible, convert to string
             response = str(response)
+        if DEBUG:
+            logging.info(f"RESPONSE: {response}")    
         return jsonify({"response": response}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
