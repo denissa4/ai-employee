@@ -71,7 +71,7 @@ direct_line_tool = FunctionTool.from_defaults(
     fn=send_direct_line_message,
     description="""Sends a message to an Azure Direct Line bot and retrieves the response.
     
-    The 'dl_lantern' argument should be dynamically chosen based on the user's question:
+    The 'dl_lantern' argument should be wrapped in 'os.getenv()' and be dynamically chosen based on the user's question:
     * 'AGENT' - for querying an LLM about documents stored in Azure Blob Storage.
     * 'NLSQL' - for retrieving information from a database using natural language.
     * 'STRUCTURIZER' - for organizing text data based on column names.
