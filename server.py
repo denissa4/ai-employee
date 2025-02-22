@@ -28,7 +28,13 @@ app = Flask(__name__)
 
 # Load environment variables
 SANDBOX_URL = os.getenv('SANDBOX_ENDPOINT', '')
-
+# if os.getenv('MODEL_NAME', '').lower() == 'deepseek':
+#     llm = DeepSeek(
+#         model="deepseek-chat"
+#         api_key=os.getenv("DEEPSEEK_API_KEY", ""),
+#         temperature=0.7
+#     )
+# else:
 llm = AzureOpenAI(
     model=os.getenv('MODEL_NAME', ''),
     deployment_name=os.getenv('MODEL_DEPLOYMENT_NAME', ''),
@@ -82,7 +88,7 @@ direct_line_tool = FunctionTool.from_defaults(
     The 'message' argument is the text to send to the bot.
     
     Always wait for the tool to return a response—it will **always** provide one.  
-    Your response to the user **must be exactly what the tool returns**, unless explicitly instructed otherwise."""
+    **Always use the response from this tool to answer the user's question.**""",
 )
 
 # Create the ReActAgent and inject the custom tool

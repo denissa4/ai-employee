@@ -51,7 +51,7 @@ async def get_bot_reply(client, conversation_id, headers):
 
             for activity in activities:
                 if activity['from']['id'] != 'user1':
-                    bot_message = activity['text']
+                    bot_message = activity
                     return bot_message
         else:
             print(f"Error getting bot reply: {response.status_code}")
@@ -77,3 +77,4 @@ async def send_and_receive_message(secret, message):
             print(f"Response: {res}")
             return res
         return None
+    
