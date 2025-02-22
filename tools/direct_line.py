@@ -1,5 +1,6 @@
 import httpx
 import asyncio
+import os
 
 DIRECT_LINE_ENDPOINT = 'https://directline.botframework.com/v3/directline'
 TIMEOUT = 25.0
@@ -61,8 +62,9 @@ async def get_bot_reply(client, conversation_id, headers):
 
 
 async def send_and_receive_message(secret, message):
+    s = os.getenv(secret, '')
     headers = {
-        'Authorization': f'Bearer {secret}',
+        'Authorization': f'Bearer {s}',
         'Content-Type': 'application/json'
     }
 
