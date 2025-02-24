@@ -41,7 +41,8 @@ class Bot extends ActivityHandler {
             }, {
                 headers: {
                     Authorization: `Bearer ${accessToken?.token}`,
-                }
+                },
+                timeout: 600000
             });
 
             return response.data.response;

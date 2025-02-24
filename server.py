@@ -7,6 +7,8 @@ from llama_index.core.agent import ReActAgent
 from llama_index.core.tools import FunctionTool
 from llama_index.llms.deepseek import DeepSeek
 from llama_index.llms.azure_openai import AzureOpenAI
+# Import any helper functions
+from helpers.get_tool_envs import load_envs
 # Import custom tools
 from tools.direct_line import send_and_receive_message
 
@@ -19,8 +21,9 @@ SANDBOX_URL = os.getenv('SANDBOX_ENDPOINT', '')
 if os.getenv('MODEL_NAME', '').lower() == 'deepseek':
     llm = DeepSeek(
         model="deepseek-r1",
-        api_key=os.getenv("DEEPSEEK_API_KEY", ""),
-        api_base=os.getenv('MODEL_ENDPOINT', '')
+        api_key=os.getenv("MODEL_API_KEY", ""),
+        api_base=os.getenv('MODEL_ENDPOINT', ''),
+        prompt=os.getenv('MODEL_SYSTEM_PROMPT', None),
     )
 else:
     llm = AzureOpenAI(
@@ -33,10 +36,9 @@ else:
     )
 
 # Create ReAct-compatible tools
-
 def execute_python_code(code: str):
     try:
-        response = requests.post(SANDBOX_URL, json={"code": code}, timeout=120)
+        response = requests.post(SANDBOX_URL, json={"code": code}, timeout=300)
         return response.json().get("output", "No output received")
     except Exception as e:
         return f"Execution error: {e}"
@@ -61,17 +63,18 @@ def send_direct_line_message(dl_lantern: str, message: str):
         return f"Error communicating with bot: {e}"
 
 # Direct Line tool - sends message to given bot and returns response
+tools_with_descriptions = load_envs()
+tool_descriptions = "\n".join([f"    * '{key}' {value}" for key, value in tools_with_descriptions.items()])
 direct_line_tool = FunctionTool.from_defaults(
     name="send_direct_line_message",
     fn=send_direct_line_message,
-    description="""Sends a message to an Azure Direct Line bot and retrieves the response.
+    description=f"""Sends a message to an Azure Direct Line bot and retrieves the response.
     
     The 'dl_lantern' argument should be dynamically chosen based on the user's question:
-    * 'AGENT_TO_RETRIEVE_DOCUMENTS_KNOWLEDGE_4647' - for querying an LLM about documents stored in Azure Blob Storage.
-    * 'NLSQL_TO_RETRIEVE_DATABASE_INFORMATION_2723' - for retrieving information from a database using natural language.
-    * 'STRUCTURIZER_TO_ORGANIZE_TEXT_DATA_8391' - for organizing text data based on column names.
+    {tool_descriptions}
     
     Select the most appropriate variable automatically based on the intent of the user's query.
+    If you are unsure which tool to use, please ask the user to specify.
     
     The 'message' argument is the text to send to the bot.
     
@@ -95,9 +98,8 @@ def prompt():
             return jsonify({"error": "Prompt is required"}), 400
         if DEBUG:
             logging.info(f"USER PROMPT: {prompt}")
-        # Query the agent to generate and execute Python code
         response = agent.chat(prompt)
-        if not isinstance(response, (dict, list)):  # If not JSON-compatible, convert to string
+        if not isinstance(response, (dict, list)):
             response = str(response)
         if DEBUG:
             logging.info(f"RESPONSE: {response}")    
