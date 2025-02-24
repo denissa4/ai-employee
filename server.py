@@ -26,6 +26,8 @@ user_context = {}
 def prompt():
     """Handles messages from Azure Bot, processes with LLM asynchronously, and responds with context."""
     try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         data = request.json
         prompt = data.get("prompt")
         user_id = data.get("user_id")
@@ -69,7 +71,7 @@ def prompt():
         updated_context = "\n".join(context)
 
         # Pass the updated context to the LLM
-        response = asyncio.run(agent.achat(updated_context))
+        response = loop.run_until_complete(agent.chat(updated_context))
 
         # Append the bot's response to the context
         context.append(f"Bot: {response}")
@@ -84,3 +86,5 @@ def prompt():
         return jsonify({"response": response}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    finally:
+        loop.close()
