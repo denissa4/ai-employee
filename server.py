@@ -3,6 +3,8 @@ import logging
 import asyncio
 from flask import Flask, request, jsonify
 from core import get_agent
+# Import helper functions
+from helpers.download_attachments import download_and_extract_text
 
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
@@ -30,20 +32,20 @@ def prompt():
         data = request.json
         prompt = data.get("prompt")
         user_id = data.get("user_id")
-        channel_id = data.get("channel_id")
-        attachments = data.get("attachments")
+        # channel_id = data.get("channel_id")
+        # attachments = data.get("attachments")
 
-        # Get download URL for attachments
-        if channel_id == "msteams":
-            url = attachments[0]['content']['downloadUrl']
-        else:
-            try:
-                url = attachments[0]['contentUrl']
-            except:
-                try:
-                    url = attachments[0]['fileUrl']
-                except:
-                    url = None
+        # # Get download URL for attachments
+        # if channel_id == "msteams":
+        #     url = attachments[0]['content']['downloadUrl']
+        # else:
+        #     try:
+        #         url = attachments[0]['contentUrl']
+        #     except:
+        #         try:
+        #             url = attachments[0]['fileUrl']
+        #         except:
+        #             url = None
 
         if not prompt or not user_id:
             return jsonify({"error": "Prompt and user_id are required"}), 400
