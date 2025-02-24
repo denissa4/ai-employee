@@ -28,20 +28,20 @@ def prompt():
         data = request.json
         prompt = data.get("prompt")
         user_id = data.get("user_id")
-        channel_id = data.get("channel_id")
-        attachments = data.get("attachments")
+        # channel_id = data.get("channel_id")
+        # attachments = data.get("attachments")
 
-        # Get download URL for attachments
-        if channel_id == "msteams":
-            url = attachments[0].get("content", {}).get("downloadUrl")
-        else:
-            url = next(
-                (attachments[0].get(key) for key in ["contentUrl", "fileUrl"] if attachments[0].get(key)), 
-                None
-            )
-        if url:
-            name = attachments[0]['name']
-            filename, processed_file = download_and_extract_text(url, name)
+        # # Get download URL for attachments
+        # if channel_id == "msteams":
+        #     url = attachments[0].get("content", {}).get("downloadUrl")
+        # else:
+        #     url = next(
+        #         (attachments[0].get(key) for key in ["contentUrl", "fileUrl"] if attachments[0].get(key)), 
+        #         None
+        #     )
+        # if url:
+        #     name = attachments[0]['name']
+        #     filename, processed_file = download_and_extract_text(url, name)
 
         if not prompt or not user_id:
             return jsonify({"error": "Prompt and user_id are required"}), 400
@@ -59,9 +59,9 @@ def prompt():
 
         # Append the new prompt to the existing context
         context.append(f"User: {prompt}")
-        if filename and processed_file:
-            context.append(f"""File attachment name: {filename}
-                           File attachment content: {processed_file}""")
+        # if filename and processed_file:
+        #     context.append(f"""File attachment name: {filename}
+        #                    File attachment content: {processed_file}""")
 
         # Trim the context if it exceeds the MAX_CONTEXT_SIZE
         if len(context) > MAX_CONTEXT_SIZE:
