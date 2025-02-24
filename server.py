@@ -1,5 +1,6 @@
 import os
 import logging
+import asyncio
 import nest_asyncio
 from flask import Flask, request, jsonify
 from core import get_agent
@@ -15,13 +16,6 @@ agent = get_agent()
 
 if DEBUG:
     logging.info("AGENT CREATED AND READY TO CHAT")
-
-import asyncio
-import os
-from flask import Flask, request, jsonify
-import logging
-
-app = Flask(__name__)
 
 # Load environment variable for the maximum context size
 MAX_CONTEXT_SIZE = int(os.getenv('MAX_CONTEXT_SIZE', 5))  # Default to 5 messages if not set
