@@ -25,9 +25,6 @@ user_context = {}
 @app.route("/prompt", methods=["POST"])
 def prompt():
     """Handles messages from Azure Bot, processes with LLM asynchronously, and responds with context."""
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-
     try:
         data = request.json
         prompt = data.get("prompt")
@@ -72,8 +69,7 @@ def prompt():
         updated_context = "\n".join(context)
 
         # Pass the updated context to the LLM
-        response = loop.run_until_complete(agent.achat(updated_context))
-        loop.close()
+        response = asyncio.run(agent.achat(updated_context))
 
         # Append the bot's response to the context
         context.append(f"Bot: {response}")
