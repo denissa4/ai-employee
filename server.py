@@ -5,44 +5,32 @@ import asyncio
 from flask import Flask, request, jsonify
 from llama_index.core.agent import ReActAgent
 from llama_index.core.tools import FunctionTool
+from llama_index.llms.deepseek import DeepSeek
 from llama_index.llms.azure_openai import AzureOpenAI
 # Import custom tools
 from tools.direct_line import send_and_receive_message
 
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
-azure_loggers = [
-    'azure',
-    'azure.core',
-    'azure.identity',
-    'azure.storage',
-    'azure.storage.blob',
-    'azure.storage.common',
-]
-
-for logger in azure_loggers:
-    l = logging.getLogger(logger)
-    l.setLevel(logging.ERROR)
-
 app = Flask(__name__)
 
-# Load environment variables
 SANDBOX_URL = os.getenv('SANDBOX_ENDPOINT', '')
-# if os.getenv('MODEL_NAME', '').lower() == 'deepseek':
-#     llm = DeepSeek(
-#         model="deepseek-chat"
-#         api_key=os.getenv("DEEPSEEK_API_KEY", ""),
-#         temperature=0.7
-#     )
-# else:
-llm = AzureOpenAI(
-    model=os.getenv('MODEL_NAME', ''),
-    deployment_name=os.getenv('MODEL_DEPLOYMENT_NAME', ''),
-    api_key=os.getenv('MODEL_API_KEY', ''),
-    azure_endpoint=os.getenv('MODEL_ENDPOINT', ''),
-    api_version=os.getenv('MODEL_VERSION', ''),
-    system_prompt=os.getenv('MODEL_SYSTEM_PROMPT', None),
-)
+
+if os.getenv('MODEL_NAME', '').lower() == 'deepseek':
+    llm = DeepSeek(
+        model="deepseek-r1",
+        api_key=os.getenv("DEEPSEEK_API_KEY", ""),
+        api_base=os.getenv('MODEL_ENDPOINT', '')
+    )
+else:
+    llm = AzureOpenAI(
+        model=os.getenv('MODEL_NAME', ''),
+        deployment_name=os.getenv('MODEL_DEPLOYMENT_NAME', ''),
+        api_key=os.getenv('MODEL_API_KEY', ''),
+        azure_endpoint=os.getenv('MODEL_ENDPOINT', ''),
+        api_version=os.getenv('MODEL_VERSION', ''),
+        system_prompt=os.getenv('MODEL_SYSTEM_PROMPT', None),
+    )
 
 # Create ReAct-compatible tools
 
