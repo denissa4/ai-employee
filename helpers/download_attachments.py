@@ -29,14 +29,23 @@ def download_and_extract_text(url: str, filename: str) -> str:
 
         # Extract text while preserving layout
         if file_extension == "pdf":
-            return extract_text_from_pdf(filepath)
+            extracted_text = extract_text_from_pdf(filepath)
         elif file_extension in ["doc", "docx"]:
-            return extract_text_from_docx(filepath)
+            extracted_text = extract_text_from_docx(filepath)
         else:
             return f"Unsupported file type: {file_extension}"
 
+        # Delete temp file after processing
+        os.remove(filepath)
+
+        return filename, extracted_text
+
     except Exception as e:
         return f"Error: {str(e)}"
+    finally:
+        # Ensure file is deleted even if an exception occurs
+        if os.path.exists(filepath):
+            os.remove(filepath)
 
 
 def extract_text_from_pdf(filepath: str) -> str:
@@ -53,6 +62,7 @@ def extract_text_from_pdf(filepath: str) -> str:
     with pdfplumber.open(filepath) as pdf:
         for page in pdf.pages:
             extracted_text.append(page.extract_text(x_tolerance=2, y_tolerance=2))
+    
     return "\n\n".join(filter(None, extracted_text))  # Join non-empty pages
 
 
