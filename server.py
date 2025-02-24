@@ -1,11 +1,8 @@
 import os
 import logging
 import asyncio
-import nest_asyncio
 from flask import Flask, request, jsonify
 from core import get_agent
-
-nest_asyncio.apply()
 
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
@@ -33,6 +30,20 @@ def prompt():
         data = request.json
         prompt = data.get("prompt")
         user_id = data.get("user_id")
+        channel_id = data.get("channel_id")
+        attachments = data.get("attachments")
+
+        # Get download URL for attachments
+        if channel_id == "msteams":
+            url = attachments[0]['content']['downloadUrl']
+        else:
+            try:
+                url = attachments[0]['contentUrl']
+            except:
+                try:
+                    url = attachments[0]['fileUrl']
+                except:
+                    url = None
 
         if not prompt or not user_id:
             return jsonify({"error": "Prompt and user_id are required"}), 400
@@ -60,6 +71,7 @@ def prompt():
 
         # Pass the updated context to the LLM
         response = loop.run_until_complete(agent.achat(updated_context))
+        loop.close()
 
         # Append the bot's response to the context
         context.append(f"Bot: {response}")
@@ -74,5 +86,3 @@ def prompt():
         return jsonify({"response": response}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    finally:
-        loop.close()

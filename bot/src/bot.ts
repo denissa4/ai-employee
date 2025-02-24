@@ -19,9 +19,11 @@ class Bot extends ActivityHandler {
         this.onMessage(async (context: TurnContext, next) => {
             const userMessage = context.activity.text;
             const userId = context.activity.from.id;
+            const attachments = context.activity.attachments;
+            const channelId = context.activity.channelId;
 
             try {
-                const response = await this.sendToFlaskApp(userMessage, userId);
+                const response = await this.sendToFlaskApp(userMessage, userId, attachments, channelId);
                 await context.sendActivity(response);
             } catch (error) {
                 console.error('Error in bot interaction:', error);
@@ -32,7 +34,7 @@ class Bot extends ActivityHandler {
         });
     }
 
-    async sendToFlaskApp(userMessage: string, userId: string) {
+    async sendToFlaskApp(userMessage: string, userId: string, attachments: any, channelId: string) {
         try {
             const tokenCredential = new DefaultAzureCredential();
             const accessToken = await tokenCredential.getToken("https://management.azure.com/.default");
@@ -40,6 +42,8 @@ class Bot extends ActivityHandler {
             const response = await axios.post(this.nlApiUrl, {
                 prompt: userMessage,
                 user_id: userId,
+                attachments: attachments,
+                channel_id: channelId,
             }, {
                 headers: {
                     Authorization: `Bearer ${accessToken?.token}`,
