@@ -1,7 +1,10 @@
 import os
 import logging
+import nest_asyncio
 from flask import Flask, request, jsonify
 from core import get_agent
+
+nest_asyncio.apply()
 
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
@@ -43,6 +46,11 @@ def prompt():
         if DEBUG:
             logging.info(f"USER PROMPT: {prompt} (User ID: {user_id})")
 
+        # If the user sends "refresh", clear their conversation history
+        if prompt.strip().lower() == "refresh":
+            user_context.pop(user_id, None)  # Remove user's history if it exists
+            return jsonify({"response": "Your conversation history has been cleared."}), 200
+
         # Get the user context (conversation history)
         context = user_context.get(user_id, [])
 
@@ -57,7 +65,7 @@ def prompt():
         updated_context = "\n".join(context)
 
         # Pass the updated context to the LLM
-        response = loop.run_until_complete(agent.chat(updated_context))
+        response = loop.run_until_complete(agent.achat(updated_context))
 
         # Append the bot's response to the context
         context.append(f"Bot: {response}")
@@ -74,4 +82,3 @@ def prompt():
         return jsonify({"error": str(e)}), 500
     finally:
         loop.close()
-
