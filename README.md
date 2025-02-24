@@ -13,6 +13,7 @@ LLM variables
 * MODEL_DEPLOYMENT_NAME - _LLM's Azure deployment name (OpenAI only)_
 * MODEL_VERSION - _LLM version (OpenAI only)_
 * MODEL_SYSTEM_PROMPT - _Persistent prompt to help guide the LLM_
+* MAX_CONTEXT_SIZE - _The number of previous messages the LLM will use for context_
 
 Direct Line tools
 (replace \<tool name\> with a name of your choice, tool names for secret and description must match)
