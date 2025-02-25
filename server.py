@@ -29,7 +29,10 @@ async def prompt():
         prompt = data.get("prompt", '')
         user_id = data.get("user_id")
         channel_id = data.get("channel_id")
-        attachments = data.get("attachments")
+        try:
+            attachments = data.get("attachments")
+        except:
+            attachments = None
 
         # Get download URL for attachments
         filename = ''
