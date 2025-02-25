@@ -5,8 +5,9 @@ llama-index-llms-deepseek==0.1.1
 llama-index-llms-azure-openai==0.3.0
 llama-index-tools-azure-code-interpreter==0.4.0
 # Server
-Flask==3.1.0
+quart==0.20.0
 gunicorn==23.0.0
+uvicorn==0.34.0
 # Bot
 azure-identity==1.20.0
 botbuilder-core==4.16.2

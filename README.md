@@ -26,3 +26,6 @@ Azure variables
 * MicrosoftAppId - _Microsoft App ID of the Azure Bot Service_
 * MicrosoftAppTenantId - _Microsoft Tenant ID of the Azure Bot Service_
 * MicrosoftAppType - _Type of application used for authentication (default: UserAssignedMSI)_
+
+Other variables
+* DEBUG - _For debugging logs (default: False)_

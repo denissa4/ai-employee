@@ -1,5 +1,4 @@
 import os
-import logging
 import requests
 import asyncio
 from llama_index.core.agent import ReActAgent
@@ -48,6 +47,7 @@ def get_execute_tool():
 
         - **Use this tool whenever no specific tool is available for the requested task.**
         - If the user requires **up-to-date information**, **always** use this tool instead of relying on your own knowledge—unless a more appropriate tool is available.
+        - If the users request requires a file to be generated use this tool and **always** store the file in /generated_files, you will then receive a download URL for the user.
         
         This tool ensures that calculations, data processing, and external queries are executed in real-time.""",
     )
