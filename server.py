@@ -29,24 +29,21 @@ async def prompt():
         prompt = data.get("prompt", '')
         user_id = data.get("user_id")
         channel_id = data.get("channel_id")
-        try:
-            attachments = data.get("attachments")
-        except:
-            attachments = None
+        attachments = data.get("attachments", [])
 
         # Get download URL for attachments
         filename = ''
         processed_file = ''
-        if attachments and isinstance(attachments[0], dict):
+        if attachments and isinstance(attachments, list) and isinstance(attachments[0], dict):
             if channel_id == "msteams":
                 url = attachments[0].get("content", {}).get("downloadUrl")
             else:
                 url = next(
-                    (attachments[0].get(key) for key in ["contentUrl", "fileUrl"] if attachments[0].get(key)), 
+                    (attachments[0].get(key) for key in ["contentUrl", "fileUrl"] if attachments[0].get(key)),
                     None
                 )
             if url:
-                name = attachments[0]['name']
+                name = attachments[0].get('name', 'unknown_file')
                 filename, processed_file = download_and_extract_text(url, name)
 
         if not user_id:
