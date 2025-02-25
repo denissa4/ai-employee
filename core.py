@@ -48,7 +48,7 @@ def get_execute_tool():
         - **Use this tool whenever no specific tool is available for the requested task.**
         - If the user requires **up-to-date information**, **always** use this tool instead of relying on your own knowledge—unless a more appropriate tool is available.
         - If the user's request requires a file to be generated use this tool and **always** store the file in /srv. You will be given a filename
-        give the download URL to the user the URL will be {os.getenv(SANDBOX_URL)}/download/<filename>
+        give the download URL to the user the URL will be {os.getenv('SANDBOX_ENDPOINT')}/download/<filename>
         
         This tool ensures that calculations, data processing, and external queries are executed in real-time.""",
     )

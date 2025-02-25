@@ -29,8 +29,14 @@ async def prompt():
         prompt = data.get("prompt", '')
         user_id = data.get("user_id")
         channel_id = data.get("channel_id")
+        if DEBUG:
+            app.logger.info(f"USER ID: {user_id}")
+            app.logger.info(f"CHANNEL ID: {channel_id}")
+            app.logger.info(f"USER PROMPT: {prompt}")
         try:
             attachments = data.get("attachments", [])
+            if DEBUG:
+                app.logger.info(f"ATTACHMENTS: {attachments}")
 
             # Get download URL for attachments
             filename = ''
@@ -52,12 +58,6 @@ async def prompt():
 
         if not user_id:
             return jsonify({"error": "user_id is required"}), 400
-
-        if DEBUG:
-            app.logger.info(f"USER ID: {user_id}")
-            app.logger.info(f"CHANNEL ID: {channel_id}")
-            app.logger.info(f"USER PROMPT: {prompt}")
-            app.logger.info(f"ATTACHMENTS: {attachments}")
 
         # Form the full message to the LLM
         full_message_parts = []
