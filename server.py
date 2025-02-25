@@ -34,7 +34,7 @@ async def prompt():
         # Get download URL for attachments
         filename = ''
         processed_file = ''
-        if attachments:
+        if attachments and isinstance(attachments[0], dict):
             if channel_id == "msteams":
                 url = attachments[0].get("content", {}).get("downloadUrl")
             else:
