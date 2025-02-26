@@ -24,14 +24,14 @@ def get_llm():
                 api_base=os.getenv('MODEL_ENDPOINT', ''),
                 prompt=os.getenv('MODEL_SYSTEM_PROMPT', None),
                 azure_deployment=os.getenv('MODEL_DEPLOYMENT_NAME', None),
-                timeout=os.getenv('MODEL_TIMEOUT', 300)
+                timeout=float(os.getenv('MODEL_TIMEOUT', 300.00)),
             )
         else:
             return AzureAICompletionsModel(
                 endpoint=os.getenv('MODEL_ENDPOINT', ''),
                 credential=os.getenv("MODEL_API_KEY", ""),
                 model_name=os.getenv('MODEL_NAME', ''),
-                timeout=os.getenv('MODEL_TIMEOUT', 300)
+                timeout=float(os.getenv('MODEL_TIMEOUT', 300.00)),
             )
     else:
         return AzureOpenAI(
@@ -41,13 +41,13 @@ def get_llm():
             azure_endpoint=os.getenv('MODEL_ENDPOINT', ''),
             api_version=os.getenv('MODEL_VERSION', ''),
             system_prompt=os.getenv('MODEL_SYSTEM_PROMPT', None),
-            timeout=os.getenv('MODEL_TIMEOUT', 300),
+            timeout=float(os.getenv('MODEL_TIMEOUT', 300.00)),
         )
 
 # Create ReAct-compatible tools
 def execute_python_code(code: str):
     try:
-        response = requests.post(f"{SANDBOX_URL}/execute", json={"code": code}, timeout=300)
+        response = requests.post(f"{SANDBOX_URL}/execute", json={"code": code}, timeout=600)
         return response.json().get("output", "No output received")
     except Exception as e:
         return f"Execution error: {e}"
@@ -56,14 +56,17 @@ def get_execute_tool():
     return FunctionTool.from_defaults(
         name="execute_python",
         fn=execute_python_code,
-        description=f"""Executes Python code in a sandbox container and returns the output.
+        description=f"""Executes Python code in a sandbox container and returns the output in this format:
+        
+        {{\n    \"stdout\": \"\",\n    \"stderr\": \"\",\n    \"file\": None,\n    \"error\": None\n}}
 
         - **Use this tool whenever no specific tool is available for the requested task.**
         - If the user requires **up-to-date information**, **always** use this tool instead of relying on your own knowledge—unless a more appropriate tool is available.
-        - If the user's request requires a file to be generated use this tool and **always** store the file in /srv. Use uuid to generate a random filename and
-        give the download URL to the user the URL will be {SANDBOX_URL}/download/<filename> , be sure to replace <filename> with the exact uuid filename you created.
+        - If the user's request requires a file to be generated use this tool and **always** store the file in /srv. Give the download URL to the user the URL will be {SANDBOX_URL}/download/<filename>
+        be sure to replace <filename> with the file that is returned from this tool.
 
         * Use the reportlab library for creating PDF files
+        * Use matplotlib for creating data visualizations
         
         This tool ensures that calculations, data processing, and external queries are executed in real-time.""",
     )
