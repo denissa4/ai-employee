@@ -63,7 +63,7 @@ async def prompt():
         full_message_parts = []
         if prompt:
             full_message_parts.append(f"{prompt}")
-        if attachments:
+        if filename and processed_file:
             full_message_parts.append(f"ATTACHMENT: {filename} \n\n {processed_file}")
 
         full_message = "\n".join(full_message_parts)

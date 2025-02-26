@@ -13,6 +13,7 @@ LLM variables
 * MODEL_DEPLOYMENT_NAME - _LLM's Azure deployment name (OpenAI only)_
 * MODEL_VERSION - _LLM version (OpenAI only)_
 * MODEL_SYSTEM_PROMPT - _Persistent prompt to help guide the LLM_
+* MODEL_TIMEOUT - _Timeout in seconds that the LLM will take to complete the request_
 
 Direct Line tools
 (replace \<tool name\> with a name of your choice, tool names for secret and description must match)
