@@ -48,7 +48,9 @@ def get_execute_tool():
         - **Use this tool whenever no specific tool is available for the requested task.**
         - If the user requires **up-to-date information**, **always** use this tool instead of relying on your own knowledge—unless a more appropriate tool is available.
         - If the user's request requires a file to be generated use this tool and **always** store the file in /srv. Use uuid to generate a random filename and
-        give the download URL to the user the URL will be {SANDBOX_URL}/download/<filename> , be sure to replace <filename> with the randomly generated filename you created. 
+        give the download URL to the user the URL will be {SANDBOX_URL}/download/<filename> , be sure to replace <filename> with the randomly generated filename you created.
+
+        * Use the reportlab library for creating PDF files
         
         This tool ensures that calculations, data processing, and external queries are executed in real-time.""",
     )
