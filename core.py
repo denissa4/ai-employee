@@ -5,6 +5,7 @@ from llama_index.core.agent import ReActAgent
 from llama_index.core.tools import FunctionTool
 from llama_index.llms.deepseek import DeepSeek
 from llama_index.llms.azure_openai import AzureOpenAI
+from llama_index.llms.azure_inference import AzureAICompletionsModel
 # Import helper functions
 from helpers.get_tool_envs import load_envs
 # Import tools
@@ -14,13 +15,22 @@ SANDBOX_URL = os.getenv('SANDBOX_ENDPOINT', '')
 
 # Initialize the LLM
 def get_llm():
-    if os.getenv('MODEL_NAME', '').lower() == 'deepseek':
-        return DeepSeek(
-            model="deepseek-r1",
-            api_key=os.getenv("MODEL_API_KEY", ""),
-            api_base=os.getenv('MODEL_ENDPOINT', ''),
-            prompt=os.getenv('MODEL_SYSTEM_PROMPT', None),
-        )
+    if "deepseek" in os.getenv('MODEL_NAME', '').lower():
+        if "legacy" in os.getenv('MODEL_NAME', '').lower():
+            # Legacy DeepSeek method
+            return DeepSeek(
+                model=os.getenv('MODEL_NAME', ''),
+                api_key=os.getenv("MODEL_API_KEY", ""),
+                api_base=os.getenv('MODEL_ENDPOINT', ''),
+                prompt=os.getenv('MODEL_SYSTEM_PROMPT', None),
+                azure_deployment=os.getenv('MODEL_DEPLOYMENT_NAME', None)
+            )
+        else:
+            return AzureAICompletionsModel(
+                endpoint=os.getenv('MODEL_ENDPOINT', ''),
+                credential=os.getenv("MODEL_API_KEY", ""),
+                model_name=os.getenv('MODEL_NAME', '')
+            )
     else:
         return AzureOpenAI(
             model=os.getenv('MODEL_NAME', ''),

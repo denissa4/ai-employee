@@ -3,6 +3,7 @@ llama-index==0.12.17
 llama-index-llms-openai==0.3.10
 llama-index-llms-deepseek==0.1.1
 llama-index-llms-azure-openai==0.3.0
+llama-index-llms-azure-inference==0.3.0
 llama-index-tools-azure-code-interpreter==0.4.0
 # Server
 quart==0.20.0
