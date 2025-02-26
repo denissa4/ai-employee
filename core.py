@@ -23,13 +23,15 @@ def get_llm():
                 api_key=os.getenv("MODEL_API_KEY", ""),
                 api_base=os.getenv('MODEL_ENDPOINT', ''),
                 prompt=os.getenv('MODEL_SYSTEM_PROMPT', None),
-                azure_deployment=os.getenv('MODEL_DEPLOYMENT_NAME', None)
+                azure_deployment=os.getenv('MODEL_DEPLOYMENT_NAME', None),
+                timeout=os.getenv('MODEL_TIMEOUT', 300)
             )
         else:
             return AzureAICompletionsModel(
                 endpoint=os.getenv('MODEL_ENDPOINT', ''),
                 credential=os.getenv("MODEL_API_KEY", ""),
-                model_name=os.getenv('MODEL_NAME', '')
+                model_name=os.getenv('MODEL_NAME', ''),
+                timeout=os.getenv('MODEL_TIMEOUT', 300)
             )
     else:
         return AzureOpenAI(
@@ -39,6 +41,7 @@ def get_llm():
             azure_endpoint=os.getenv('MODEL_ENDPOINT', ''),
             api_version=os.getenv('MODEL_VERSION', ''),
             system_prompt=os.getenv('MODEL_SYSTEM_PROMPT', None),
+            timeout=os.getenv('MODEL_TIMEOUT', 300),
         )
 
 # Create ReAct-compatible tools
