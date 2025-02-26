@@ -23,11 +23,12 @@ class Bot extends ActivityHandler {
             const channelId = context.activity.channelId;
 
             try {
+                await context.sendActivity("Processing your request... I'll be with you shortly!");
                 const response = await this.sendToFlaskApp(userMessage, userId, attachments, channelId);
                 await context.sendActivity(response);
             } catch (error) {
                 console.error('Error in bot interaction:', error);
-                await context.sendActivity('Sorry, there was an issue processing your request.');
+                await context.sendActivity('Sorry, there was an issue processing your request: ' + error);
             }
 
             await next();
@@ -36,6 +37,7 @@ class Bot extends ActivityHandler {
 
     async sendToFlaskApp(userMessage: string, userId: string, attachments: any, channelId: string) {
         try {
+            let headers = {}
             const tokenCredential = new DefaultAzureCredential();
             const accessToken = await tokenCredential.getToken("https://management.azure.com/.default");
 
@@ -45,9 +47,7 @@ class Bot extends ActivityHandler {
                 attachments: attachments,
                 channel_id: channelId,
             }, {
-                headers: {
-                    Authorization: `Bearer ${accessToken?.token}`,
-                },
+                headers: headers,
                 timeout: 600000
             });
 
