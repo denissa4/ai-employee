@@ -34,6 +34,18 @@ async def prompt():
             app.logger.info(f"CHANNEL ID: {channel_id}")
             app.logger.info(f"USER PROMPT: {prompt}")
         try:
+
+            # Check if the user sent the "refresh" command
+            if prompt.lower() == "refresh":
+                # Clear the chat history for this user
+                async with user_agents_lock:
+                    if user_id in user_agents:
+                        agent = user_agents[user_id]
+                        agent.memory.reset()  # Reset the agent's chat history
+                        if DEBUG:
+                            app.logger.info(f"Chat history cleared for user: {user_id}")
+                return jsonify({"response": "Chat history has been refreshed."}), 200
+
             attachments = data.get("attachments", [])
             if DEBUG:
                 app.logger.info(f"ATTACHMENTS: {attachments}")

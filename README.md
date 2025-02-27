@@ -10,10 +10,11 @@ LLM variables
 * MODEL_API_KEY - _API key for the LLM_
 * MODEL_ENDPOINT - _LLM endpoint URL_
 * MODEL_NAME - _LLM name_
-* MODEL_DEPLOYMENT_NAME - _LLM's Azure deployment name (OpenAI only)_
-* MODEL_VERSION - _LLM version (OpenAI only)_
+* MODEL_DEPLOYMENT_NAME - _LLM's Azure deployment name (Azure OpenAI only)_
+* MODEL_VERSION - _LLM version (Azure OpenAI only)_
 * MODEL_SYSTEM_PROMPT - _Persistent prompt to help guide the LLM_
-* MODEL_TIMEOUT - _Timeout in seconds that the LLM will take to complete the request_
+* MODEL_TIMEOUT - _Timeout in seconds that the LLM will take to complete the request (default: 300)_
+* MODEL_MEMORY_TOKENS - _Total number of chat history tokens the model will store for memory (default: 3000)_
 
 Direct Line tools
 (replace \<tool name\> with a name of your choice, tool names for secret and description must match)

@@ -2,8 +2,9 @@ import os
 import requests
 import asyncio
 from llama_index.core.agent import ReActAgent
-from llama_index.core.tools import FunctionTool
 from llama_index.llms.deepseek import DeepSeek
+from llama_index.core.tools import FunctionTool
+from llama_index.core.memory import ChatMemoryBuffer
 from llama_index.llms.azure_openai import AzureOpenAI
 from llama_index.llms.azure_inference import AzureAICompletionsModel
 # Import helper functions
@@ -23,7 +24,6 @@ def get_llm():
                 api_key=os.getenv("MODEL_API_KEY", ""),
                 api_base=os.getenv('MODEL_ENDPOINT', ''),
                 prompt=os.getenv('MODEL_SYSTEM_PROMPT', None),
-                azure_deployment=os.getenv('MODEL_DEPLOYMENT_NAME', None),
                 timeout=float(os.getenv('MODEL_TIMEOUT', 300.00)),
             )
         else:
@@ -64,6 +64,8 @@ def get_execute_tool():
         - If the user requires **up-to-date information**, **always** use this tool instead of relying on your own knowledge—unless a more appropriate tool is available.
         - If the user's request requires a file to be generated use this tool and **always** store the file in /srv. Give the download URL to the user the URL will be {SANDBOX_URL}/download/<filename>
         be sure to replace <filename> with the file that is returned from this tool.
+        - If the user sends you a PDF document to edit, you will receive the extracted text and its positional metadata (including coordinates, width, height, and text direction) in JSON format from pdfplumber.
+        You should always preserve the original document's layout and formatting—including text placement, spacing, and structure—unless explicitly requested otherwise.
 
         * Use the reportlab library for creating PDF files
         * Use matplotlib for creating data visualizations
@@ -105,6 +107,6 @@ def get_agent():
     llm = get_llm()
     execute_tool = get_execute_tool()
     direct_line_tool = get_direct_line_tool()
-
-    agent = ReActAgent.from_tools([execute_tool, direct_line_tool], llm=llm, verbose=True)
+    memory = ChatMemoryBuffer.from_defaults(token_limit=int(os.getenv('MODEL_MEMORY_TOKENS', 3000)))
+    agent = ReActAgent.from_tools([execute_tool, direct_line_tool], llm=llm, verbose=True, memory=memory)
     return agent

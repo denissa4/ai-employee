@@ -1,4 +1,5 @@
 import os
+import json
 import requests
 import pdfplumber
 from docx import Document
@@ -50,20 +51,21 @@ def download_and_extract_text(url: str, filename: str) -> str:
 
 def extract_text_from_pdf(filepath: str) -> str:
     """
-    Extracts text from a PDF while preserving layout.
-
+    Extracts text from a PDF while preserving layout using word positions.
+    
     Args:
         filepath (str): Path to the PDF file.
 
     Returns:
-        str: Extracted text with layout preservation.
+        str: JSON containing extracted text with positional metadata.
     """
-    extracted_text = []
     with pdfplumber.open(filepath) as pdf:
-        for page in pdf.pages:
-            extracted_text.append(page.extract_text(x_tolerance=2, y_tolerance=2))
-    
-    return "\n\n".join(filter(None, extracted_text))  # Join non-empty pages
+        data = {}
+        for page_num, page in enumerate(pdf.pages):
+            words = page.extract_words()  # Extract words with coordinates
+            data[str(page)] = words
+
+    return json.dumps(data, indent=2)  # Return JSON for structured output
 
 
 def extract_text_from_docx(filepath: str) -> str:
