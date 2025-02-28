@@ -4,7 +4,7 @@ import asyncio
 from quart import Quart, request, jsonify
 from core import get_agent
 # Import helper functions
-from helpers.download_attachments import download_and_extract_text
+from helpers.attachments_handler import download_and_save
 
 # Initialize the app
 app = Quart(__name__)
@@ -51,8 +51,7 @@ async def prompt():
                 app.logger.info(f"ATTACHMENTS: {attachments}")
 
             # Get download URL for attachments
-            filename = ''
-            processed_file = ''
+            file_path = ''
             if attachments and isinstance(attachments, list) and isinstance(attachments[0], dict):
                 if channel_id == "msteams":
                     url = attachments[0].get("content", {}).get("downloadUrl")
@@ -63,10 +62,9 @@ async def prompt():
                     )
                 if url:
                     name = attachments[0].get('name', 'unknown_file')
-                    filename, processed_file = download_and_extract_text(url, name)
+                    file_path = download_and_save(url, name)
         except:
-            filename = ''
-            processed_file = ''
+            file_path = ''
 
         if not user_id:
             return jsonify({"error": "user_id is required"}), 400
@@ -75,8 +73,8 @@ async def prompt():
         full_message_parts = []
         if prompt:
             full_message_parts.append(f"{prompt}")
-        if filename and processed_file:
-            full_message_parts.append(f"ATTACHMENT: {filename} \n\n {processed_file}")
+        if file_path:
+            full_message_parts.append(f"ATTACHMENT: {file_path}")
 
         full_message = "\n".join(full_message_parts)
 
