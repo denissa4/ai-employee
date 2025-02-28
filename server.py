@@ -62,13 +62,13 @@ async def prompt():
                     )
                 if url:
                     name = attachments[0].get('name', 'unknown_file')
-                    file_path = download_and_save(url, name)
-                    app.logger.info(f"THIS HAPPENED:::::  {file_path}")
+                    try:
+                        file_path = download_and_save(url)
+                    except Exception as e:
+                        if DEBUG:
+                            app.logger.info(f"Error downloading document:  {e}")
         except:
             file_path = ''
-        
-        if DEBUG:
-            app.logger.info(file_path)
 
         if not user_id:
             return jsonify({"error": "user_id is required"}), 400
@@ -83,7 +83,7 @@ async def prompt():
         full_message = "\n".join(full_message_parts)
 
         if DEBUG:
-            app.logger.info(full_message)
+            app.logger.info(f"FULL PROMPT: {full_message}")
 
         # Get or create an agent for this user
         async with user_agents_lock:
