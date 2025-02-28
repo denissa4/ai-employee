@@ -142,6 +142,7 @@ def get_replace_text_in_word_document_tool():
         * The 'document_path' argument should be a string of the full document path including filename and extention, e.g. "/tmp/document_name.docx"
         * The 'target' argument should be the target string you want to replace.
         * The 'replacement' argument should be the replacement string.
+        * The 'final' argument is a boolean and should be set to 'True' for your final document edit - you will then receive a URL to send to the user.
 
         - Use this tool if the user askes you to edit a document with the .doc or .docx extention.
         - **Make sure the target string is exactly as it appears in the data returned from the read_word_document tool.**
@@ -160,5 +161,11 @@ def get_agent():
     read_word_tool = get_read_word_document_tool()
     replace_word_text_tool = get_replace_text_in_word_document_tool()
     memory = ChatMemoryBuffer.from_defaults(token_limit=int(os.getenv('MODEL_MEMORY_TOKENS', 3000)))
-    agent = ReActAgent.from_tools([execute_tool, direct_line_tool, read_word_tool, replace_word_text_tool], llm=llm, verbose=True, memory=memory)
+    agent = ReActAgent.from_tools(
+        tools=[execute_tool, direct_line_tool, read_word_tool, replace_word_text_tool], 
+        llm=llm, 
+        verbose=True, 
+        memory=memory,
+        max_iterations=int(os.getenv('MODEL_MAX_ITERATIONS', 10))
+        )
     return agent

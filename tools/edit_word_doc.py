@@ -1,6 +1,5 @@
 from docx import Document
 import os
-import tempfile
 import uuid
 import requests
 from io import BytesIO
@@ -35,7 +34,7 @@ def replace_text_in_doc(doc_path, target, replacement, final=False):
                     replace_text_in_paragraph(paragraph, target, replacement)
 
     filename = uuid.uuid4()
-    output_path = os.path.join(tempfile.gettempdir(), filename)
+    output_path = os.path.join(f"/tmp/{filename}")
     
     # Save the modified document
     doc.save(output_path)

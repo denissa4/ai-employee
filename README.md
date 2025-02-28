@@ -15,6 +15,7 @@ LLM variables
 * MODEL_SYSTEM_PROMPT - _Persistent prompt to help guide the LLM_
 * MODEL_TIMEOUT - _Timeout in seconds that the LLM will take to complete the request (default: 300)_
 * MODEL_MEMORY_TOKENS - _Total number of chat history tokens the model will store for memory (default: 3000)_
+* MODEL_MAX_ITERATIONS - _Total number of iterations the model will take before giving up (default: 10)_
 
 Direct Line tools
 (replace \<tool name\> with a name of your choice, tool names for secret and description must match)
