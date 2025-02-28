@@ -38,8 +38,8 @@ To run in your local environment follow these steps:
 
 * Comment out: 
     ```
-    const tokenCredential = new DefaultAzureCredential();
-    const accessToken = await tokenCredential.getToken("https://management.azure.com/.default");
+    // const tokenCredential = new DefaultAzureCredential();
+    // const accessToken = await tokenCredential.getToken("https://management.azure.com/.default");
     ```
     - from `bot/src/bot.ts`
     ```

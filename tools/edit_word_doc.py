@@ -34,7 +34,7 @@ def replace_text_in_doc(doc_path, target, replacement, final=False):
                     replace_text_in_paragraph(paragraph, target, replacement)
 
     filename = uuid.uuid4()
-    output_path = os.path.join(f"/tmp/{filename}")
+    output_path = f"/tmp/{filename}"
     
     # Save the modified document
     doc.save(output_path)
@@ -42,26 +42,28 @@ def replace_text_in_doc(doc_path, target, replacement, final=False):
     os.remove(doc_path)
 
     if final:
+        # Read the file content to send it as part of the code
+        with open(output_path, 'rb') as f:
+            file_content = f.read()
+
+        # Encode file content as a string suitable for inclusion in Python code (Base64 is a good option)
+        file_content_base64 = file_content.decode('latin1')  # Avoid issues with binary data, latin1 preserves bytes
         fn = uuid.uuid4()
         code = f"""
         import os
 
         # Define the path for the file in the 'srv' directory
-        srv_directory = '/srv'
         file_name = {fn}
-        file_path = os.path.join(srv_directory, file_name)
-
-        # Ensure the directory exists
-        if not os.path.exists(srv_directory):
-            os.makedirs(srv_directory)
+        file_path = f"/srv/{{file_name}}"
 
         # Create and write to the file
         with open(file_path, 'w') as f:
-            f.write('This is a test file created inside the srv directory.')
+            f.write({file_content_base64})
             
         return file_path  # Return the path of the created file
         """
         response = requests.post(f"{SANDBOX_URL}/execute", json={"code": code}, timeout=600)
+        os.remove(output_path)
         return response
 
     return output_path
