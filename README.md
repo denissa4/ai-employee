@@ -30,3 +30,27 @@ Azure variables
 
 Other variables
 * DEBUG - _For debugging logs (default: False)_
+
+## Run Locally
+
+To run in your local environment follow these steps:
+
+* Comment out: 
+    ```
+    const tokenCredential = new DefaultAzureCredential();
+    const accessToken = await tokenCredential.getToken("https://management.azure.com/.default");
+    ```
+    - from `bot/src/bot.ts`
+    ```
+    // MicrosoftAppType: process.env.MicrosoftAppType,
+    // MicrosoftAppTenantId: process.env.MicrosoftAppTenantId,
+    ```
+    - from `bot/src/index.ts`
+
+* run: `docker build -t ai-employee .`
+
+* run: `docker run --rm -p 8080:80 --env-file .env ai-employee`
+
+* use MS Bot Emulator on address `http://localhost:8080/api/messages`
+
+* or, add ennironment variables: `MICROSOFT_APP_ID` and `MICROSOFT_APP_PASSSWORD` to use an external MS bot.
