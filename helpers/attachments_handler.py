@@ -1,12 +1,10 @@
-import aiohttp
-import os
+import requests
 import uuid
-import mimetypes
+import os
 
-async def download_and_save(url: str) -> str:
-    from server import app
+def download_and_save(url: str) -> str:
     """
-    Downloads a file from a given URL asynchronously and extracts content while preserving layout.
+    Downloads a file from a given URL and extracts content while preserving layout.
 
     Args:
         url (str): The URL of the file to download.
@@ -14,30 +12,30 @@ async def download_and_save(url: str) -> str:
     Returns:
         str: The path to the downloaded file.
     """
-    app.logger.info(f"Downloading file from {url} ...")
+    file_path = None  # Initialize file_path to handle exceptions properly
 
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                if response.status != 200:
-                    return f"Failed to download file. Status Code: {response.status}"
+        response = requests.get(url, stream=True)
+        if response.status_code != 200:
+            return f"Failed to download file. Status Code: {response.status_code}"
 
-                # Get file extension from Content-Type header
-                extension = 'docx'
+        # Get file extension (assuming docx for now)
+        extension = 'docx'
 
-                # Generate file name with extension
-                filename = f"{uuid.uuid4()}{extension}"
-                file_path = f"/tmp/{filename}"
+        # Generate file name with extension
+        filename = f"{uuid.uuid4()}.{extension}"
+        file_path = f"/tmp/{filename}"
 
-                # Save file
-                with open(file_path, "wb") as f:
-                    while chunk := await response.content.read(8192):
-                        f.write(chunk)
+        # Save file
+        with open(file_path, "wb") as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                if chunk:
+                    f.write(chunk)
 
-        app.logger.info(f"File downloaded to {file_path}")
         return file_path
 
     except Exception as e:
-        if os.path.exists(file_path):
+        if file_path and os.path.exists(file_path):
             os.remove(file_path)
         return f"Error: {str(e)}"
+
