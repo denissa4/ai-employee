@@ -2,7 +2,7 @@ from docx import Document
 import os
 import uuid
 import requests
-from io import BytesIO
+import base64
 
 SANDBOX_URL = os.getenv('SANDBOX_ENDPOINT', '')
 
@@ -47,19 +47,24 @@ def replace_text_in_doc(doc_path, target, replacement, final=False):
             file_content = f.read()
 
         # Encode file content as a string suitable for inclusion in Python code (Base64 is a good option)
-        file_content_base64 = file_content.decode('latin1')  # Avoid issues with binary data, latin1 preserves bytes
+        file_content_base64 = base64.b64encode(file_content).decode('utf-8')
         fn = uuid.uuid4()
         code = f"""
         import os
+        import base64
 
         # Define the path for the file in the 'srv' directory
-        file_name = {fn}
+        file_name = "{fn}"
         file_path = f"/srv/{{file_name}}"
 
-        # Create and write to the file
-        with open(file_path, 'w') as f:
-            f.write({file_content_base64})
-            
+        # Decode Base64 back to binary
+        file_content_base64 = "{file_content_base64}"
+        file_content = base64.b64decode(file_content_base64)
+
+        # Write the binary data back to the file
+        with open(file_path, 'wb') as f:
+            f.write(file_content)
+
         return file_path  # Return the path of the created file
         """
         response = requests.post(f"{SANDBOX_URL}/execute", json={"code": code}, timeout=600)
