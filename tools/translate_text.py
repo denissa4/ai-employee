@@ -1,11 +1,16 @@
 import os
 from llama_index.llms.azure_inference import AzureAICompletionsModel
 
-# from deep_translator import GoogleTranslator
+from deep_translator import GoogleTranslator
 
-# def translate_text(text: str, target_language: str):
-#     return GoogleTranslator(source='auto', target=target_language).translate(text)
-
+# def translate_with_llm(text: str, target_language: str):
+#     try:
+#         translation = GoogleTranslator(source='auto', target=target_language).translate(text)
+#         if translation:
+#             return translation
+#         return "There was some kind of issue and the translation didn't happen..."
+#     except Exception as e:
+#         return f"There was an error: {e}"
 
 def translate_with_llm(text_to_translate: str, target_language: str):
     try:

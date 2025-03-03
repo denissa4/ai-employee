@@ -46,7 +46,7 @@ def process_document_xml(document_path, operation, modifications=None):
 
 def map_style_dependencies(document_path):
     """
-    Analyzes style inheritance relationships
+    Analyzes style inheritance relationships and extracts text content.
     Requires: networkx, python-docx
     """
     from docx.shared import Pt
@@ -54,6 +54,7 @@ def map_style_dependencies(document_path):
 
     doc = Document(document_path)
     G = nx.DiGraph()
+    text_content = []
 
     for style in doc.styles:
         G.add_node(style.name)
@@ -66,15 +67,27 @@ def map_style_dependencies(document_path):
         if isinstance(style, ParagraphStyle) and style.next_paragraph_style:
             G.add_edge(style.name, style.next_paragraph_style.name)
 
+    # Extract text content with styles
+    for para in doc.paragraphs:
+        para_text = para.text.strip()
+        if para_text:
+            text_content.append({
+                'text': para_text,
+                'style': para.style.name if para.style else 'Unknown',
+                'font': getattr(para.style.font, 'name', None),
+                'size': para.style.font.size.pt if para.style.font.size else None
+            })
+
     return {
-        'style_graph': nx.node_link_data(G, edges="links"),  # Fix NetworkX warning
+        'style_graph': nx.node_link_data(G, edges="links"),
         'style_properties': {
             style.name: {
                 'font': getattr(style, 'font', None) and getattr(style.font, 'name', None),
                 'size': getattr(style, 'font', None) and (style.font.size.pt if style.font.size else None),
                 'spacing': getattr(style, 'paragraph_format', None) and getattr(style.paragraph_format, 'line_spacing', None)
             } for style in doc.styles if isinstance(style, ParagraphStyle)  # Filter only ParagraphStyle
-        }
+        },
+        'text_content': text_content
     }
 
 

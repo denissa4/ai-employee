@@ -63,7 +63,7 @@ async def prompt():
                 if url:
                     name = attachments[0].get('name', 'unknown_file')
                     try:
-                        file_path = download_and_save(url)
+                        file_path = download_and_save(url, name)
                     except Exception as e:
                         if DEBUG:
                             app.logger.info(f"Error downloading document:  {e}")

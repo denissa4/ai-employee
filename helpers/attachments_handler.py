@@ -2,7 +2,7 @@ import requests
 import uuid
 import os
 
-def download_and_save(url: str) -> str:
+def download_and_save(url: str, name: str) -> str:
     """
     Downloads a file from a given URL and extracts content while preserving layout.
 
@@ -20,7 +20,7 @@ def download_and_save(url: str) -> str:
             return f"Failed to download file. Status Code: {response.status_code}"
 
         # Get file extension (assuming docx for now)
-        extension = 'docx'
+        extension = name.split('.')[1]
 
         # Generate file name with extension
         filename = f"{uuid.uuid4()}.{extension}"
