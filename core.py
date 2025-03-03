@@ -246,9 +246,22 @@ def get_agent():
     llm = get_llm()
     execute_tool = get_execute_tool()
     direct_line_tool = get_direct_line_tool()
+    extract_xml_tool = get_xml_from_word_tool()
+    style_map_tool = get_style_map_tool()
+    replace_text_tool = get_replace_text_tool()
+    replace_embedded_text_tool = get_embedded_content_processing_tool()
+    translate_text_tool = get_translate_text_tool()
+    validate_document_tool = get_validata_document_formatting_tool()
     memory = ChatMemoryBuffer.from_defaults(token_limit=int(os.getenv('MODEL_MEMORY_TOKENS', 3000)))
     agent = ReActAgent.from_tools(
-        tools=[execute_tool, direct_line_tool], 
+        tools=[execute_tool,
+                direct_line_tool, 
+                extract_xml_tool, 
+                style_map_tool, 
+                replace_text_tool, 
+                replace_embedded_text_tool,
+                translate_text_tool,
+                validate_document_tool], 
         llm=llm, 
         verbose=True, 
         memory=memory,
