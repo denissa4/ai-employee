@@ -11,7 +11,7 @@ from llama_index.llms.azure_inference import AzureAICompletionsModel
 from helpers.get_tool_envs import load_envs
 # Import tools
 from tools.direct_line import send_and_receive_message
-from tools.edit_word_doc import process_document_xml, map_style_dependencies, structured_document_replace, process_embedded_content, validate_document_integrity
+from tools.edit_word_doc import map_style_dependencies, structured_document_replace, process_embedded_content
 from tools.translate_text import translate_with_llm
 
 
@@ -112,31 +112,6 @@ def get_direct_line_tool():
     )
 
 
-# def extract_xml_from_word_doc(document_path: str, operation: str, modifications: list):
-#     try:
-#         return process_document_xml(document_path, operation, modifications)
-#     except Exception as e:
-#         return f"Error processing document: {e}"
-    
-# def get_xml_from_word_tool():
-#     return FunctionTool.from_defaults(
-#         name="extract_xml_from_word_document",
-#         fn=extract_xml_from_word_doc,
-#         description=f"""This tool extracts the raw XML content and style definitions from a DOCX file. 
-#         - The 'document_path' argument will be an attachment the user send with the file path beginning with `/tmp/`
-#         - The 'operation' argument should be set to 'extract' to get the documents underlying XML structure.
-#         - The modifications argument should be set to None
-
-#         Usage:
-
-#         When to Use:
-#         Use this tool when you need an overview of the document's content and formatting before performing any translations or modifications.
-#         It's ideal for “reading” the document structure.
-#         How to Use:
-#         Provide the path to the DOCX file. The tool returns the XML of the document's body and the styles XML.""",
-#     )
-
-
 def map_styles_for_word_doc(document_path: str):
     try:
         return map_style_dependencies(document_path)
@@ -148,7 +123,8 @@ def get_style_map_tool():
         name="generate_style_map_for_word_document",
         fn=map_styles_for_word_doc,
         description=f"""This tool analyzes the document's styles by mapping out the style dependencies and properties. 
-        It creates a report showing the hierarchy of styles (e.g., which style is based on which) and their formatting details (such as font, size, and spacing).
+        It creates a report showing the hierarchy of styles (e.g., which style is based on which) and their formatting details (such as font, size, and spacing)
+        as well as their corresponding text.
 
         Usage:
 
@@ -160,7 +136,7 @@ def get_style_map_tool():
     )
 
 
-def replace_text_in_word_doc(document_path: str, replacements: list):
+def replace_text_in_word_doc(document_path: str, replacements: list[dict]):
     try:
         return structured_document_replace(document_path, replacements)
     except Exception as e:
@@ -180,10 +156,18 @@ def get_replace_text_tool():
         Use this tool when you need to replace specific text within paragraphs (e.g., in headings or body text) while keeping the formatting 
         and embedded images intact.
         How to Use:
-        Provide a DOCX file along with a list of replacement configurations. Each configuration specifies:
-        A prefix (the starting text) and an optional suffix (ending text) to identify the target text.
-        The style (e.g., "Normal" or "Heading 1") that the paragraph must match.
-        The translated text to replace the target text.
+        Provide a DOCX file along with a list of replacement configurations. Here is an example configuration:
+
+        {{
+            'context': {{
+                'prefix': "ABSOLUTE 1000 XP",  # Text to search for - use prefix only to replace entire text
+                'suffix': "",      # Optional suffix to replace text between prefix and suffix
+                'style': "Heading 1"      # Target paragraph style to restrict replacements
+            }},
+            'translated': "ENGLISH TRANSLATION"  # Replacement text
+        }}
+        
+        use the style map to get the correct styles and text to replace
         """,
     )
 
@@ -207,30 +191,13 @@ def get_embedded_content_processing_tool():
         Use this tool when you need to translate text that appears in tables, charts, 
         or other embedded objects that are not processed by the paragraph text replacement tool.
         How to Use:
-        Provide the DOCX file and a mapping of original text to translated text. The tool scans tables and charts and updates the text accordingly.""",
-    )
-
-
-def validate_document_formatting(original_path: str, translated_path: str):
-    try:
-        return validate_document_integrity(original_path, translated_path)
-    except Exception as e:
-        return f"Error validating document formatting: {e}"
-    
-def get_validata_document_formatting_tool():
-        return FunctionTool.from_defaults(
-        name="validate_document_formatting_after_editing",
-        fn=validate_document_formatting,
-        description=f"""This tool compares the formatting of the original document with the modified (translated) document. 
-        It generates a report on formatting preservation by comparing properties such as paragraph alignment and style details.
-
-        Usage:
-
-        When to Use:
-        Use this tool after performing translations and modifications to ensure that the formatting (e.g., spacing, fonts, alignment) 
-        remains consistent with the original document.
-        How to Use:
-        Provide the paths to both the original and the modified DOCX files. The tool returns a report indicating any discrepancies in formatting.""",
+        Provide the DOCX file and a mapping of original text to translated text. The tool scans tables and charts and updates the text accordingly.
+        An example of the 'replacements' argument:
+        translations = {{
+            "Sales Q1": "Ventas Q1",
+            "Revenue": "Ingresos"
+        }}
+        """,
     )
 
 
@@ -254,22 +221,18 @@ def get_agent():
     llm = get_llm()
     execute_tool = get_execute_tool()
     direct_line_tool = get_direct_line_tool()
-    # extract_xml_tool = get_xml_from_word_tool()
     style_map_tool = get_style_map_tool()
     replace_text_tool = get_replace_text_tool()
     replace_embedded_text_tool = get_embedded_content_processing_tool()
     translate_text_tool = get_translate_text_tool()
-    validate_document_tool = get_validata_document_formatting_tool()
     memory = ChatMemoryBuffer.from_defaults(token_limit=int(os.getenv('MODEL_MEMORY_TOKENS', 3000)))
     agent = ReActAgent.from_tools(
         tools=[execute_tool,
-                direct_line_tool, 
-                # extract_xml_tool, 
+                direct_line_tool,
                 style_map_tool, 
                 replace_text_tool, 
                 replace_embedded_text_tool,
-                translate_text_tool,
-                validate_document_tool], 
+                translate_text_tool], 
         llm=llm, 
         verbose=False, 
         memory=memory,

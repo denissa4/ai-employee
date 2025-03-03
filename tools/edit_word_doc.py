@@ -1,48 +1,7 @@
-from lxml import etree
 from docx import Document
 import networkx as nx
 import regex as re
 from difflib import SequenceMatcher
-
-
-def process_document_xml(document_path, operation, modifications=None):
-    """
-    Processes Word document XML structure with style preservation.
-    Requires: python-docx, lxml
-    """
-    doc = Document(document_path)
-    nsmap = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
-
-    if operation == 'extract':
-        return {
-            'body_xml': etree.tostring(doc._element.body, pretty_print=True, encoding="unicode"),
-            'styles_xml': etree.tostring(doc.styles.element, pretty_print=True, encoding="unicode") if hasattr(doc.styles, "element") else None
-        }
-
-    elif operation == 'modify' and modifications:
-        for mod in modifications:
-            NAMESPACES = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
-            xpath_query = etree.XPath(mod['xpath'], namespaces=NAMESPACES)
-            for p_elem in xpath_query(doc._element):
-                # Iterate over each run element inside the paragraph
-                for run_elem in p_elem.findall('.//w:r', namespaces=NAMESPACES):
-                    # Skip runs that contain drawing/image elements to preserve images
-                    if run_elem.find('.//w:drawing', namespaces=NAMESPACES) is not None:
-                        continue
-                    # Then, iterate over the text elements
-                    for t_elem in run_elem.findall('.//w:t', namespaces=NAMESPACES):
-                        if t_elem.text and "Appendix" in t_elem.text:
-                            t_elem.text = t_elem.text.replace("Appendix", mod['translated_text'])
-                    # Optionally, apply style modifications if desired
-                    if 'style_attributes' in mod and isinstance(mod['style_attributes'], dict):
-                        for key, value in mod['style_attributes'].items():
-                            run_elem.set(key, value)
-
-        new_path = document_path.replace('.docx', '_translated.docx')
-        doc.save(new_path)
-        return new_path
-
-
 
 def map_style_dependencies(document_path):
     """
@@ -141,41 +100,10 @@ def structured_document_replace(document_path, replacements):
     return new_path
 
 
-def validate_document_integrity(original_path, translated_path):
-    """
-    Compares document formatting at granular level
-    Requires: python-docx, difflib
-    """
-    orig_doc = Document(original_path)
-    trans_doc = Document(translated_path)
-
-    report = {
-        'paragraph_alignment': [],
-        'style_mismatches': [],
-        'layout_diffs': []
-    }
-
-    for orig_para, trans_para in zip(orig_doc.paragraphs, trans_doc.paragraphs):
-        # Compare formatting properties
-        fmt_match = SequenceMatcher(
-            None, 
-            str(orig_para.paragraph_format), 
-            str(trans_para.paragraph_format)
-        ).ratio()
-        
-        report['paragraph_alignment'].append({
-            'original_style': orig_para.style.name if hasattr(orig_para.style, 'name') else 'Unknown',
-            'translated_style': trans_para.style.name if hasattr(trans_para.style, 'name') else 'Unknown',
-            'format_match': fmt_match
-        })
-
-    return report
-
-
 def process_embedded_content(document_path, translations):
     """
     Handles charts, tables, and other embedded objects
-    Requires: python-docx, pandas
+    Requires: python-docx
     """
     doc = Document(document_path)
     
