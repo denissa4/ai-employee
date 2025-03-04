@@ -150,19 +150,19 @@ def combined_replace(document_path, replacements):
 
     # Python code to be executed remotely
     code = f"""
-    import uuid
-    import base64
-    from docx import Document
+import uuid
+import base64
+from docx import Document
 
-    # Decode and save the file
-    doc_bytes = base64.b64decode("{encoded_doc}")
-    fn = uuid.uuid4()
-    fn = str(fn)
-    file_path = f"/srv/{{fn}}.docx"
-    with open(file_path, "wb") as f:
-        f.write(doc_bytes)
+# Decode and save the file
+doc_bytes = base64.b64decode("{encoded_doc}")
+fn = uuid.uuid4()
+fn = str(fn)
+file_path = f"/srv/{{fn}}.docx"
+with open(file_path, "wb") as f:
+    f.write(doc_bytes)
 
-    return "File saved successfully"
+return "File saved successfully"
     """
 
     # Execute remotely and return result
