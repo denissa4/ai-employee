@@ -1,5 +1,5 @@
 from docx import Document
-import os
+import base64
 
 def map_style_dependencies_with_text(document_path):
     """
@@ -140,14 +140,31 @@ def combined_replace(document_path, replacements):
                         series.name = translated_text
 
     from core import execute_python_code
+    temp_save_path = "/tmp/temp.docx"
+    doc.save(temp_save_path)
+
+    # Read and encode the document for transfer
+    with open(temp_save_path, "rb") as f:
+        doc_bytes = f.read()
+        encoded_doc = base64.b64encode(doc_bytes).decode("utf-8")  # Convert to Base64 string
+
+    # Python code to be executed remotely
     code = f"""
+    import uuid
+    import base64
     from docx import Document
-    def save():
-    try:
-        {doc}.save({document_path})
-        return "file saved"
-    except Exception as e:
-        return "Error saveing document: {{e}}"
+
+    # Decode and save the file
+    doc_bytes = base64.b64decode("{encoded_doc}")
+    fn = uuid.uuid4()
+    fn = str(fn)
+    file_path = f"/srv/{{fn}}.docx"
+    with open(file_path, "wb") as f:
+        f.write(doc_bytes)
+
+    return "File saved successfully"
     """
+
+    # Execute remotely and return result
     res = execute_python_code(code)
     return res
