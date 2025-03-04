@@ -124,7 +124,7 @@ def get_style_map_tool():
         fn=map_styles_for_word_doc,
         description=f"""Use this tool to generate a style map with corresponding text from a Word document.
         
-        * 'document_path' should be the path to a Word document, it will always be in the /tmp/ directory
+        * 'document_path' should be the path to a Word document, it will always be in the /srv/ directory
         This tool will return a list of dictionaries, each dictionary will represent one group of text and its styling in the Word document.
         The strcuture of a dictionary is:
             {{
@@ -137,6 +137,7 @@ def get_style_map_tool():
         - If the user asks you to translate a Word document, you should use this tool to get the document's style and structure and you should add to the translation
         to the 'translated_text' key in each dictionary, then pass this edited list of dictionaries to the replace_text_in_word_document tool's 'replacements' argument.
         - You should translate the document yourself instead of relying on another tool.
+        - The relevant translations should be completed in a single step.
         """
     )
 
@@ -186,7 +187,7 @@ def get_agent():
                 style_map_tool, 
                 replace_text_tool], 
         llm=llm, 
-        verbose=False, 
+        verbose=True, 
         memory=memory,
         max_iterations=int(os.getenv('MODEL_MAX_ITERATIONS', 10))
         )

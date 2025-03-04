@@ -24,7 +24,7 @@ def download_and_save(url: str, name: str) -> str:
 
         # Generate file name with extension
         filename = f"{uuid.uuid4()}.{extension}"
-        file_path = f"/tmp/{filename}"
+        file_path = f"/srv/{filename}"
 
         # Save file
         with open(file_path, "wb") as f:

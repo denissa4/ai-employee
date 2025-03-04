@@ -6,6 +6,9 @@ from core import get_agent
 # Import helper functions
 from helpers.attachments_handler import download_and_save
 
+logging.basicConfig(level=logging.DEBUG)
+logging.getLogger("azure").setLevel(logging.ERROR)  # Suppress Azure SDK logs
+
 # Initialize the app
 app = Quart(__name__)
 
