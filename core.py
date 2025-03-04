@@ -184,6 +184,7 @@ def get_replace_text_in_word_tool():
                     'replacement text'
                 ]
             ]
+        - ** ALWAYS enter the text to translate EXACTLY as it appears in the style map, NEVER use "..." you should ALWAYS enter the full text. **
         - The document_path argument should be the path to the document you want to edit, this will be the same file path you used in the style map tool.
         ** IMPORTANT This tool returns the output in this format:
         {\n    \"stdout\": \"\",\n    \"stderr\": \"\",\n    \"file\": None,\n    \"error\": None\n} send the file URL to the user. **
