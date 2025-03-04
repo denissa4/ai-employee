@@ -184,6 +184,7 @@ def get_replace_text_in_word_tool():
                     'replacement text'
                 ]
             ]
+        - The document_path argument should be the path to the document you want to edit, this will be the same file path you used in the style map tool.
         ** IMPORTANT This tool returns the output in this format:
         {\n    \"stdout\": \"\",\n    \"stderr\": \"\",\n    \"file\": None,\n    \"error\": None\n} send the file URL to the user. **
         """

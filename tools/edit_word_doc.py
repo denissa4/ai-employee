@@ -145,7 +145,7 @@ def combined_replace(document_path, replacements):
     def save():
     try:
         {doc}.save({document_path})
-        return {document_path}
+        return "file saved"
     except Exception as e:
         return "Error saveing document: {{e}}"
     """
