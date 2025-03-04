@@ -168,8 +168,9 @@ def get_replace_text_in_word_tool():
     return FunctionTool.from_defaults(
         name="replace_text_in_word_document",
         fn=replace_text_in_word_doc,
-        description=f"""Use this tool to replace text in a Word document.
-        This tool takes the path of the Word document to edit and the replacements in the form of a list of dictionaries, for example:
+        description=f"""Use the replace_text_in_word_document tool to replace text in a Word document.
+        Ensure that the replacements argument is a strict list of standard Python dictionaries (not AttributedDict or any special objects).
+        Each dictionary should follow this format:
             [
                 {{
                     'style': 'Heading 2',
@@ -182,7 +183,7 @@ def get_replace_text_in_word_tool():
                     'translated_text': 'replacement text'
                 }}
             ]
-
+        The output must be a valid Python dictionary with plain lists and strings. Avoid using any special objects or custom types.
         ** IMPORTANT This tool will return a download URL that you should send to the user. **
         """
     )
