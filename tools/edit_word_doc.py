@@ -80,6 +80,7 @@ def replace_in_paragraphs(paragraphs, replacements):
                         run.text = run.text.replace(target_text, translated_text)
 
 
+
 def combined_replace(document_path, replacements):
     """
     Combines the structured replacement (for paragraphs, headers/footers, tables)
@@ -149,6 +150,4 @@ def combined_replace(document_path, replacements):
         return "Error saveing document: {{e}}"
     """
     res = execute_python_code(code)
-    SANDBOX_URL = os.getenv('SANDBOX_ENDPOINT', '')
-    download_link = f"{SANDBOX_URL}/download/{res.split('/')[2]}"
-    return download_link
+    return res

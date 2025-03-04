@@ -184,7 +184,8 @@ def get_replace_text_in_word_tool():
                     'replacement text'
                 ]
             ]
-        ** IMPORTANT This tool will return a download URL that you should send to the user. **
+        ** IMPORTANT This tool returns the output in this format:
+        {\n    \"stdout\": \"\",\n    \"stderr\": \"\",\n    \"file\": None,\n    \"error\": None\n} send the file URL to the user. **
         """
     )
     
