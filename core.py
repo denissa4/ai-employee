@@ -202,7 +202,7 @@ def get_agent():
                 direct_line_tool,
                 style_map_tool, 
                 replace_text_tool,
-                get_get_files_tool], 
+                get_files_tool], 
         llm=llm, 
         verbose=True, 
         memory=memory,
