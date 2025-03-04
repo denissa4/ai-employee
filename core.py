@@ -2,6 +2,7 @@ import os
 import requests
 import asyncio
 from llama_index.core.agent import ReActAgent
+from llama_index.tools.google import GoogleSearchToolSpec
 from llama_index.llms.deepseek import DeepSeek
 from llama_index.core.tools import FunctionTool
 from llama_index.core.memory import ChatMemoryBuffer
@@ -138,16 +139,16 @@ def get_style_map_tool():
     return FunctionTool.from_defaults(
         name="generate_style_map_for_word_document",
         fn=map_styles_for_word_doc,
-        description=f"""Use this tool to generate a style map with corresponding text from a Word document.
+        description="""Use this tool to generate a style map with corresponding text from a Word document.
         
         * 'document_path' should be the path to a Word document, it will always be in the /srv/ directory
-        This tool will return a list of dictionaries, each dictionary will represent one group of text and its styling in the Word document.
-        The strcuture of a dictionary is:
-            {{
-                'style': 'Heading 2', # The style of the body of text
-                'text': 'CONFORMITA’ NORMATIVA', # The existing text
-                'translated_text': '' # This text will replace the existing text 
-            }}
+        This tool will return a list of lists, each nested list will represent one group of text and its styling in the Word document.
+        The strcuture of a nested list structure is:
+            [
+                'Heading 2', # The style of the body of text
+                'CONFORMITA’ NORMATIVA', # The existing text
+                '' # This text will replace the existing text 
+            ]
         
         - You should use this tool to analyze, or 'read' a Word document.
         - If the user asks you to translate a Word document, you should use this tool to get the document's style and structure and you should add to the translation
@@ -158,7 +159,7 @@ def get_style_map_tool():
     )
 
 
-def replace_text_in_word_doc(document_path: str, replacements: list[dict]):
+def replace_text_in_word_doc(document_path: str, replacements: list[tuple]):
     try:
         return combined_replace(document_path, replacements)
     except Exception as e:
@@ -168,22 +169,21 @@ def get_replace_text_in_word_tool():
     return FunctionTool.from_defaults(
         name="replace_text_in_word_document",
         fn=replace_text_in_word_doc,
-        description=f"""Use the replace_text_in_word_document tool to replace text in a Word document.
-        Ensure that the replacements argument is a strict list of standard Python dictionaries (not AttributedDict or any special objects).
-        Each dictionary should follow this format:
+        description="""Use the replace_text_in_word_document tool to replace text in a Word document.
+        Ensure that the replacements argument is a strict Python list of standard Python lists.
+        Each list should follow this format:
             [
-                {{
-                    'style': 'Heading 2',
-                    'text': 'SOME TEXT',
-                    'translated_text': 'replacement text'
-                }},
-                {{
-                    'style': 'Normal',
-                    'text': 'Some other text',
-                    'translated_text': 'replacement text'
-                }}
+                [
+                    'Heading 2',
+                    'SOME TEXT',
+                    'replacement text'
+                ],
+                [
+                    'Normal',
+                    'Some other text',
+                    'replacement text'
+                ]
             ]
-        The output must be a valid Python dictionary with plain lists and strings. Avoid using any special objects or custom types.
         ** IMPORTANT This tool will return a download URL that you should send to the user. **
         """
     )
@@ -192,17 +192,27 @@ def get_replace_text_in_word_tool():
 # Set up agent with tools
 def get_agent():
     llm = get_llm()
+
+    # google_search_tool = GoogleSearchToolSpec(key=os.getenv('GOOGLE_API_KEY'), engine=os.getenv('GOOGLE_SEARCH_ID'))
+    # gmail_tool = GmailToolSpec(client_id=os.getenv('GMAIL_CLIENT_ID'),
+    #                             client_secret=os.getenv('GMAIL_CLIENT_SECRET'),
+    #                             refresh_token=os.getenv('GMAIL_REFRESH_TOKEN'))
+
     execute_tool = get_execute_tool()
     direct_line_tool = get_direct_line_tool()
     style_map_tool = get_style_map_tool()
     replace_text_tool = get_replace_text_in_word_tool()
     get_files_tool = get_get_files_tool()
+
     memory = ChatMemoryBuffer.from_defaults(token_limit=int(os.getenv('MODEL_MEMORY_TOKENS', 3000)))
+
     agent = ReActAgent.from_tools(
         tools=[execute_tool,
                 direct_line_tool,
                 style_map_tool, 
                 replace_text_tool,
+                # google_search_tool,
+                # gmail_tool,
                 get_files_tool], 
         llm=llm, 
         verbose=True, 

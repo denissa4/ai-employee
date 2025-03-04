@@ -14,11 +14,11 @@ def map_style_dependencies_with_text(document_path):
     for para in doc.paragraphs:
         para_text = para.text.strip()
         if para_text:
-            text_content.append({
-                'style': para.style.name if para.style else 'Unknown',
-                'text': para_text,
-                'translated_text': ''
-            })
+            text_content.append([
+                para.style.name if para.style else 'Unknown',
+                para_text,
+                ''
+            ])
 
     # Extract text from tables
     for table in doc.tables:
@@ -27,11 +27,11 @@ def map_style_dependencies_with_text(document_path):
                 for para in cell.paragraphs:
                     para_text = para.text.strip()
                     if para_text:
-                        text_content.append({
-                            'style': para.style.name if para.style else 'Unknown',
-                            'text': para_text,
-                            'translated_text': ''
-                        })
+                        text_content.append([
+                            para.style.name if para.style else 'Unknown',
+                            para_text,
+                            ''
+                        ])
 
     # Extract text from headers and footers
     for section in doc.sections:
@@ -40,11 +40,11 @@ def map_style_dependencies_with_text(document_path):
                 for para in header.paragraphs:
                     para_text = para.text.strip()
                     if para_text:
-                        text_content.append({
-                            'style': para.style.name if para.style else 'Unknown',
-                            'text': para_text,
-                            'translated_text': ''
-                        })
+                        text_content.append([
+                            para.style.name if para.style else 'Unknown',
+                            para_text,
+                            ''
+                        ])
 
     return text_content
 
@@ -96,6 +96,18 @@ def combined_replace(document_path, replacements):
     Returns:
       The path to the new document.
     """
+    def convert_to_dict(nested_list):
+        # Convert each inner list into a dictionary with the appropriate keys
+        return [
+            {
+                'style': item[0],
+                'text': item[1],
+                'translated_text': item[2]
+            }
+            for item in nested_list
+        ]
+    
+    replacements = convert_to_dict(replacements)
     doc = Document(document_path)
     
     # Replace in main document paragraphs.
