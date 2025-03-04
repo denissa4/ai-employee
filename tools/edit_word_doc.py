@@ -51,33 +51,32 @@ def map_style_dependencies_with_text(document_path):
 
 def replace_in_paragraphs(paragraphs, replacements):
     """
-    Applies structured replacements to a list of paragraphs.
-    Each replacement in 'replacements' is a dict with keys:
-      - 'style': the style name to match
-      - 'text': the target text to replace
-      - 'translated_text': the replacement text
+    Replaces text in paragraphs without removing images.
     """
     for paragraph in paragraphs:
-        # Combine run texts for an overall view of the paragraph
         full_text = "".join(run.text for run in paragraph.runs).strip()
         for replacement in replacements:
-            # Only proceed if the paragraph's style matches the replacement's style.
-            # (Skip if the paragraph has no style or the style doesn't match.)
             if not paragraph.style or paragraph.style.name != replacement['style']:
                 continue
 
             target_text = replacement['text'].strip()
             translated_text = replacement['translated_text'].strip()
 
-            # If the full paragraph exactly matches the target, replace it entirely.
+            # Update text without clearing the paragraph (preserving images)
             if full_text == target_text:
-                paragraph.clear()
-                paragraph.add_run(translated_text)
+                # Modify text in runs instead of clearing
+                remaining_text = translated_text
+                for run in paragraph.runs:
+                    if remaining_text:
+                        run.text = remaining_text[:len(run.text)]  # Update part of text
+                        remaining_text = remaining_text[len(run.text):]  # Remaining text
+                    else:
+                        run.text = ""  # Clear remaining runs
             else:
-                # Otherwise, do a run-by-run replacement.
                 for run in paragraph.runs:
                     if run.text and target_text in run.text:
                         run.text = run.text.replace(target_text, translated_text)
+
 
 
 
@@ -158,7 +157,7 @@ from docx import Document
 doc_bytes = base64.b64decode("{encoded_doc}")
 fn = uuid.uuid4()
 fn = str(fn)
-file_path = f"/srv/{{fn}}.docx"
+file_path = f"/tmp/{{fn}}.docx"
 with open(file_path, "wb") as f:
     f.write(doc_bytes)
     """
