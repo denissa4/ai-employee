@@ -55,6 +55,22 @@ def get_llm():
             timeout=float(os.getenv('MODEL_TIMEOUT', 300.00)),
         )
 
+
+## TEST TOOL
+def get_files():
+    try:
+        return os.listdir('/srv')
+    except Exception as e:
+        return {e}
+
+def get_get_files_tool():
+    return FunctionTool.from_defaults(
+        name="get_files",
+        fn=get_files,
+        description=f"""Returns the files stored in the /srv directory for this app.""",
+    )
+
+
 # Create ReAct-compatible tools
 def execute_python_code(code: str):
     try:
@@ -179,12 +195,14 @@ def get_agent():
     direct_line_tool = get_direct_line_tool()
     style_map_tool = get_style_map_tool()
     replace_text_tool = get_replace_text_in_word_tool()
+    get_files_tool = get_get_files_tool()
     memory = ChatMemoryBuffer.from_defaults(token_limit=int(os.getenv('MODEL_MEMORY_TOKENS', 3000)))
     agent = ReActAgent.from_tools(
         tools=[execute_tool,
                 direct_line_tool,
                 style_map_tool, 
-                replace_text_tool], 
+                replace_text_tool,
+                get_get_files_tool], 
         llm=llm, 
         verbose=True, 
         memory=memory,
