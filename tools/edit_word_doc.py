@@ -1,4 +1,5 @@
 from docx import Document
+import os
 
 def map_style_dependencies_with_text(document_path):
     """
@@ -125,6 +126,17 @@ def combined_replace(document_path, replacements):
                     if hasattr(series, 'name') and series.name and series.name.strip() == target_text:
                         series.name = translated_text
 
-    new_path = document_path.replace('.docx', '_replaced.docx')
-    doc.save(new_path)
-    return new_path
+    from core import execute_python_code
+    code = f"""
+    from docx import Document
+    def save():
+    try:
+        {doc}.save({document_path})
+        return {document_path}
+    except Exception as e:
+        return "Error saveing document: {{e}}"
+    """
+    res = execute_python_code(code)
+    SANDBOX_URL = os.getenv('SANDBOX_ENDPOINT', '')
+    download_link = f"{SANDBOX_URL}/download/{res.split('/')[2]}"
+    return download_link

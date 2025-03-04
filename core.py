@@ -137,7 +137,7 @@ def get_style_map_tool():
         - If the user asks you to translate a Word document, you should use this tool to get the document's style and structure and you should add to the translation
         to the 'translated_text' key in each dictionary, then pass this edited list of dictionaries to the replace_text_in_word_document tool's 'replacements' argument.
         - You should translate the document yourself instead of relying on another tool.
-        - The relevant translations should be completed in a single step.
+        - ** IMPORTANT The relevant translations should be completed in a single step **.
         """
     )
 
@@ -167,9 +167,8 @@ def get_replace_text_in_word_tool():
                 }}
             ]
 
-        ** IMPORTANT This tool will return a file path, after receiving the file path you should use the code execution tool to save the file to the 
-        /srv directory and give the download link to the user as per the code execution tool's instructions.
-            """
+        ** IMPORTANT This tool will return a download URL that you should send to the user. **
+        """
     )
     
 
