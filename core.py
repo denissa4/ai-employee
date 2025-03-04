@@ -159,7 +159,7 @@ def get_style_map_tool():
     )
 
 
-def replace_text_in_word_doc(document_path: str, replacements: list[tuple]):
+def replace_text_in_word_doc(document_path: str, replacements: list[list]):
     try:
         return combined_replace(document_path, replacements)
     except Exception as e:
