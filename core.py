@@ -2,18 +2,18 @@ import os
 import requests
 import asyncio
 from llama_index.core.agent import ReActAgent
-from llama_index.tools.google import GoogleSearchToolSpec
 from llama_index.llms.deepseek import DeepSeek
 from llama_index.core.tools import FunctionTool
 from llama_index.core.memory import ChatMemoryBuffer
 from llama_index.llms.azure_openai import AzureOpenAI
+from llama_index.tools.google import GoogleSearchToolSpec
+from llama_index.llms.bedrock_converse import BedrockConverse
 from llama_index.llms.azure_inference import AzureAICompletionsModel
 # Import helper functions
 from helpers.get_tool_envs import load_envs
 # Import tools
 from tools.direct_line import send_and_receive_message
 from tools.edit_word_doc import map_style_dependencies_with_text, combined_replace
-from tools.translate_text import translate_with_llm
 
 
 SANDBOX_URL = os.getenv('SANDBOX_ENDPOINT', '')
@@ -38,6 +38,13 @@ def get_llm():
             system_prompt=os.getenv('MODEL_SYSTEM_PROMPT', None)
         )
     else:
+        if "AWS-" in os.getenv('MODEL_NAME', ''):
+            return BedrockConverse(
+                model=os.getenv('MODEL_NAME', ''),
+                aws_access_key_id=os.getenv('MODEL_DEPLOYMENT_NAME', ''),
+                aws_secret_access_key=os.getenv("MODEL_API_KEY", ""),
+                region_name=os.getenv('MODEL_VERSION', ''),
+            )
         if not os.getenv('MODEL_DEPLOYMENT_NAME', ''):
             return AzureAICompletionsModel(
                 endpoint=os.getenv('MODEL_ENDPOINT', ''),
@@ -181,7 +188,7 @@ def get_replace_text_in_word_tool():
 def get_agent():
     llm = get_llm()
 
-    google_search_tool_spec = GoogleSearchToolSpec(key=os.getenv('GOOGLE_API_KEY'), engine=os.getenv('GOOGLE_SEARCH_ID', ''))
+    google_search_tool_spec = GoogleSearchToolSpec(key=os.getenv('GOOGLE_SEARCH_API_KEY'), engine=os.getenv('GOOGLE_SEARCH_ID', ''))
     # gmail_tool = GmailToolSpec(client_id=os.getenv('GMAIL_CLIENT_ID'),
     #                             client_secret=os.getenv('GMAIL_CLIENT_SECRET'),
     #                             refresh_token=os.getenv('GMAIL_REFRESH_TOKEN'))
