@@ -39,8 +39,9 @@ def get_llm():
         )
     else:
         if "AWS-" in os.getenv('MODEL_NAME', ''):
+            model = os.getenv('MODEL_NAME').replace('AWS-', '')
             return BedrockConverse(
-                model=os.getenv('MODEL_NAME', ''),
+                model=model,
                 aws_access_key_id=os.getenv('MODEL_DEPLOYMENT_NAME', ''),
                 aws_secret_access_key=os.getenv("MODEL_API_KEY", ""),
                 region_name=os.getenv('MODEL_VERSION', ''),
