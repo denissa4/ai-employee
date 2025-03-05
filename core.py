@@ -56,22 +56,6 @@ def get_llm():
             timeout=float(os.getenv('MODEL_TIMEOUT', 300.00)),
         )
 
-
-## TEST TOOL
-def get_files():
-    try:
-        return os.listdir('/srv')
-    except Exception as e:
-        return {e}
-
-def get_get_files_tool():
-    return FunctionTool.from_defaults(
-        name="get_files",
-        fn=get_files,
-        description=f"""Returns the files stored in the /srv directory for this app.""",
-    )
-
-
 # Create ReAct-compatible tools
 def execute_python_code(code: str):
     try:
@@ -170,6 +154,7 @@ def get_replace_text_in_word_tool():
         name="replace_text_in_word_document",
         fn=replace_text_in_word_doc,
         description="""Use the replace_text_in_word_document tool to replace text in a Word document.
+        ** Ideal for translations **
         Ensure that the replacements argument is a strict Python list of standard Python lists.
         Each list should follow this format:
             [
@@ -196,7 +181,7 @@ def get_replace_text_in_word_tool():
 def get_agent():
     llm = get_llm()
 
-    # google_search_tool = GoogleSearchToolSpec(key=os.getenv('GOOGLE_API_KEY'), engine=os.getenv('GOOGLE_SEARCH_ID'))
+    google_search_tool_spec = GoogleSearchToolSpec(key=os.getenv('GOOGLE_API_KEY'), engine=os.getenv('GOOGLE_SEARCH_ID', ''))
     # gmail_tool = GmailToolSpec(client_id=os.getenv('GMAIL_CLIENT_ID'),
     #                             client_secret=os.getenv('GMAIL_CLIENT_SECRET'),
     #                             refresh_token=os.getenv('GMAIL_REFRESH_TOKEN'))
@@ -205,7 +190,7 @@ def get_agent():
     direct_line_tool = get_direct_line_tool()
     style_map_tool = get_style_map_tool()
     replace_text_tool = get_replace_text_in_word_tool()
-    get_files_tool = get_get_files_tool()
+    google_search_tool = google_search_tool_spec.to_tool_list()
 
     memory = ChatMemoryBuffer.from_defaults(token_limit=int(os.getenv('MODEL_MEMORY_TOKENS', 3000)))
 
@@ -213,10 +198,9 @@ def get_agent():
         tools=[execute_tool,
                 direct_line_tool,
                 style_map_tool, 
-                replace_text_tool,
-                # google_search_tool,
-                # gmail_tool,
-                get_files_tool], 
+                replace_text_tool] 
+                + 
+                google_search_tool, 
         llm=llm, 
         verbose=True, 
         memory=memory,
