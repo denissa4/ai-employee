@@ -1,4 +1,5 @@
 from docx import Document
+from lxml import etree
 import base64
 
 def map_style_dependencies_with_text(document_path):
@@ -67,11 +68,17 @@ def replace_in_paragraphs(paragraphs, replacements):
                 # Modify text in runs instead of clearing
                 remaining_text = translated_text
                 for run in paragraph.runs:
+                    xml = run._element
+                    drawing = xml.find(".//{http://schemas.openxmlformats.org/wordprocessingml/2006/main}drawing")
                     if remaining_text:
                         run.text = remaining_text[:len(run.text)]  # Update part of text
                         remaining_text = remaining_text[len(run.text):]  # Remaining text
                     else:
                         run.text = ""  # Clear remaining runs
+                    if drawing is not None:
+                        print("not none")
+                        run._element.append(drawing)
+                        
             else:
                 for run in paragraph.runs:
                     if run.text and target_text in run.text:
@@ -157,7 +164,7 @@ from docx import Document
 doc_bytes = base64.b64decode("{encoded_doc}")
 fn = uuid.uuid4()
 fn = str(fn)
-file_path = f"/srv/{{fn}}.docx"
+file_path = f"/tmp/sandbox/{{fn}}.docx"
 with open(file_path, "wb") as f:
     f.write(doc_bytes)
     """
