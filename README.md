@@ -9,7 +9,7 @@ AI-Employee is your ultimate personal assistant, seamlessly integrating all of N
 ### LLM variables
 * MODEL_API_KEY - _API key for the LLM - For AWS Bedrock models this should be the AWS Secret Access Key_
 * MODEL_ENDPOINT - _LLM endpoint URL_
-* MODEL_NAME - _LLM name_
+* MODEL_NAME - _LLM name - For AWS Bedrock models add the prefix "AWS-" to your model name, e.g. AWS-anthropic.claude-3-7-sonnet-20250219-v1:0_
 * MODEL_DEPLOYMENT_NAME - _LLM's Azure deployment name (Azure OpenAI) - For AWS Bedrock models this should be the AWS Access Key ID._
 * MODEL_VERSION - _LLM version (Azure OpenAI) - For AWS Bedrock models this should be the model region, e.g. 'us-east-1'_
 * MODEL_SYSTEM_PROMPT - _Persistent prompt to help guide the LLM_

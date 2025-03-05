@@ -1,13 +1,13 @@
 import os
 import requests
 import asyncio
+from llama_index.llms.bedrock import Bedrock
 from llama_index.core.agent import ReActAgent
 from llama_index.llms.deepseek import DeepSeek
 from llama_index.core.tools import FunctionTool
 from llama_index.core.memory import ChatMemoryBuffer
 from llama_index.llms.azure_openai import AzureOpenAI
 from llama_index.tools.google import GoogleSearchToolSpec
-from llama_index.llms.bedrock_converse import BedrockConverse
 from llama_index.llms.azure_inference import AzureAICompletionsModel
 # Import helper functions
 from helpers.get_tool_envs import load_envs
@@ -40,7 +40,7 @@ def get_llm():
     else:
         if "AWS-" in os.getenv('MODEL_NAME', ''):
             model = os.getenv('MODEL_NAME').replace('AWS-', '')
-            return BedrockConverse(
+            return Bedrock(
                 model=model,
                 aws_access_key_id=os.getenv('MODEL_DEPLOYMENT_NAME', ''),
                 aws_secret_access_key=os.getenv("MODEL_API_KEY", ""),
