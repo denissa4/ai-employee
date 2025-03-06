@@ -86,20 +86,20 @@ def detect_objects(query, file, target_area_box=None):
 
     # Python code to be executed remotely
     code = f"""
-    import uuid
-    import base64
-    from PIL import Image
-    import io
+import uuid
+import base64
+from PIL import Image
+import io
 
-    # Decode and save the image file
-    img_bytes = base64.b64decode("{encoded_img}")
-    fn = uuid.uuid4()
-    fn = str(fn)
-    file_path = f"/tmp/sandbox/{{fn}}.jpeg"
+# Decode and save the image file
+img_bytes = base64.b64decode("{encoded_img}")
+fn = uuid.uuid4()
+fn = str(fn)
+file_path = f"/tmp/sandbox/{{fn}}.{file_extension}"
 
-    # Save the decoded image
-    image = Image.open(io.BytesIO(img_bytes))
-    image.save(file_path)
+# Save the decoded image
+image = Image.open(io.BytesIO(img_bytes))
+image.save(file_path)
     """
 
     # Execute remotely and return result
