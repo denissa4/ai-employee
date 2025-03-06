@@ -1,6 +1,6 @@
 from docx import Document
-from lxml import etree
 import base64
+import uuid
 
 def map_style_dependencies_with_text(document_path):
     """
@@ -145,8 +145,8 @@ def combined_replace(document_path, replacements):
                     if hasattr(series, 'name') and series.name and series.name.strip() == target_text:
                         series.name = translated_text
 
-    from core import execute_python_code
-    temp_save_path = "/tmp/temp.docx"
+    fn = str(uuid.uuid4())
+    temp_save_path = f"/tmp/{fn}.docx"
     doc.save(temp_save_path)
 
     # Read and encode the document for transfer
@@ -170,5 +170,6 @@ with open(file_path, "wb") as f:
     """
 
     # Execute remotely and return result
+    from core import execute_python_code
     res = execute_python_code(code)
     return res

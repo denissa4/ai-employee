@@ -13,6 +13,7 @@ from llama_index.llms.azure_inference import AzureAICompletionsModel
 # Import helper functions
 from helpers.get_tool_envs import load_envs
 # Import tools
+from tools.image_recognition import detect_objects
 from tools.direct_line import send_and_receive_message
 from tools.edit_word_doc import map_style_dependencies_with_text, combined_replace
 
@@ -187,6 +188,29 @@ def get_replace_text_in_word_tool():
     )
     
 
+def read_image(query: str, file_path: str, target_area_box=None):
+    try:
+        return detect_objects(query, file_path, target_area_box)
+    except Exception as e:
+        return f"There was an error: {e}"
+
+def get_read_image_tool():
+        return FunctionTool.from_defaults(
+        name="detect_objects_in_image",
+        fn=read_image,
+        description="""Use this tool to "read" an image.
+        This tool takes 3 arguments:
+        - 'query' The user's query to the image recognition model
+        - 'file_path' The path to the image file
+        - 'target_area_box' (optional) A list of 4 integers which are the x,y coordinates for the top right and bottom left corners of a bounding box
+        e.g. [200, 300, 600, 900]
+        
+        If the user asks to see if an object is in a certain area on the image, you should expect the user to send a set of 4 numbers corresponding to
+        the target_area_box's position. ** This variable should be left out or set to None if the user does not ask for you to look in a specific area. **
+        This tool will return a tuple containing a file URL to send to the user and the response from the image recognition model.
+        """
+    )
+
 # Set up agent with tools
 def get_agent():
     llm = get_llm()
@@ -200,6 +224,7 @@ def get_agent():
     direct_line_tool = get_direct_line_tool()
     style_map_tool = get_style_map_tool()
     replace_text_tool = get_replace_text_in_word_tool()
+    image_recognition_tool = get_read_image_tool()
     google_search_tool = google_search_tool_spec.to_tool_list()
 
     memory = ChatMemoryBuffer.from_defaults(token_limit=int(os.getenv('MODEL_MEMORY_TOKENS', 3000)))
@@ -208,7 +233,8 @@ def get_agent():
         tools=[execute_tool,
                 direct_line_tool,
                 style_map_tool, 
-                replace_text_tool] 
+                replace_text_tool,
+                image_recognition_tool] 
                 + 
                 google_search_tool, 
         llm=llm, 

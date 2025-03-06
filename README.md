@@ -27,6 +27,9 @@ AI-Employee is your ultimate personal assistant, seamlessly integrating all of N
 * GOOGLE_SEARCH_API_KEY - _Your Google Custom Search API key (ref: https://console.cloud.google.com/apis/api/customsearch.googleapis.com)_
 * GOOGLE_SEARCH_ID - _Your custom search engine ID (ref: https://programmablesearchengine.google.com/)_
 
+#### Google Gemini (image recognition)
+* GEMINI_ROCOGNITION_MODEL - _Gemini image recognition model name_
+* GEMINI_API_KEY - _Your Google Gemini API key (ref: https://aistudio.google.com/app/apikey)_
 
 ### Azure variables
 * AZURE_CLIENT_ID - _Client ID of the Azure Managed Identity_
