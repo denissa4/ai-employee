@@ -2,6 +2,7 @@ import os
 import requests
 import asyncio
 from llama_index.llms.bedrock import Bedrock
+from llama_index.llms.bedrock_converse import BedrockConverse
 from llama_index.core.agent import ReActAgent
 from llama_index.llms.deepseek import DeepSeek
 from llama_index.core.tools import FunctionTool
@@ -45,7 +46,7 @@ def get_llm():
                 aws_access_key_id=os.getenv('MODEL_DEPLOYMENT_NAME', ''),
                 aws_secret_access_key=os.getenv("MODEL_API_KEY", ""),
                 region_name=os.getenv('MODEL_VERSION', ''),
-                context_size=os.getenv('MODEL_MEMORY_TOKENS', 3000)
+                context_size=int(os.getenv('MODEL_MEMORY_TOKENS', 3000))
             )
         if not os.getenv('MODEL_DEPLOYMENT_NAME', ''):
             return AzureAICompletionsModel(
