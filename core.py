@@ -204,9 +204,11 @@ def get_read_image_tool():
         - 'file_path' The path to the image file
         - 'target_area_box' (optional) A list of 4 integers which are the x,y coordinates for the top right and bottom left corners of a bounding box
         e.g. [200, 300, 600, 900]
-        
+        ** IMPORTANT Do NOT put the bounding box in the user's request in the 'query' argument, always use the 'target_area_box' variable. **
+
         If the user asks to see if an object is in a certain area on the image, you should expect the user to send a set of 4 numbers corresponding to
         the target_area_box's position. ** This variable should be left out or set to None if the user does not ask for you to look in a specific area. **
+
         This tool will return a tuple containing a file URL to send to the user and the response from the image recognition model.
         """
     )

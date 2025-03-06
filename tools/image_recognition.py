@@ -54,10 +54,10 @@ def detect_objects(query, file, target_area_box=None):
         y1, x1, y2, x2 = item["box_2d"]
 
         # Draw the detected bounding box
-        draw.rectangle([(x1, y1), (x2, y2)], outline="red", width=2)
+        draw.rectangle([(x1, y1), (x2, y2)], outline="green", width=2)
 
         status = ''
-        color = 'green'
+        color = 'red'
         if target_area_box:
             # Determine the relation to the green box
             if is_inside((x1, y1, x2, y2), target_area_box):
@@ -105,5 +105,7 @@ image.save(file_path)
     # Execute remotely and return result
     from core import execute_python_code
     res = execute_python_code(code)
-    return (res, response.text)
+    res = str(res)
+    full = f"{res} \n\n {response.text}"
+    return full
 
