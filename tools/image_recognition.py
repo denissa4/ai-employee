@@ -5,6 +5,7 @@ from PIL import Image, ImageDraw
 import os
 import uuid
 import base64
+import requests
 
 def is_inside(box, target_area_box):
     x1, y1, x2, y2 = box
@@ -49,12 +50,18 @@ def detect_objects(query, file, target_area_box=None):
         # Draw the manually defined green box
         draw.rectangle(target_area_box, outline="green", width=3)
 
+    corrected_bounding_boxes = []
     for item in bounding_boxes:
         label = item["label"]
         y1, x1, y2, x2 = item["box_2d"]
 
+        corrected_bounding_boxes.append({
+            "label": label,
+            "box_2d": [x1, y1, x2, y2]
+        })
+
         # Draw the detected bounding box
-        draw.rectangle([(x1, y1), (x2, y2)], outline="green", width=2)
+        draw.rectangle([(x1, y1), (x2, y2)], outline="red", width=2)
 
         status = ''
         color = 'red'
@@ -101,11 +108,17 @@ file_path = f"/tmp/sandbox/{{fn}}.{file_extension}"
 image = Image.open(io.BytesIO(img_bytes))
 image.save(file_path)
     """
-
+    SANDBOX_URL = os.getenv('SANDBOX_ENDPOINT', '')
     # Execute remotely and return result
-    from core import execute_python_code
-    res = execute_python_code(code)
-    res = str(res)
-    full = f"{res} \n\n {response.text}"
+    response = requests.post(f"{SANDBOX_URL}/upload", json={"code": code}, timeout=30)
+    r = response.json().get("output", "No output received")
+    if isinstance(r, dict):
+        r = r["files"]
+
+    pattern = r"\[.*?\]"
+    response_text = response.text
+    response_text = re.sub(pattern, str(corrected_bounding_boxes), response.text)
+    # Combine results into a response
+    full = f"{r} \n\n {response_text}"
     return full
 

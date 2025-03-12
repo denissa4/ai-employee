@@ -27,6 +27,9 @@ RUN apt-get update && \
 WORKDIR /app
 COPY . /app/
 
+# Ensure the /app directory is writable for token.json (gmail api)
+RUN chmod -R 777 /app
+
 RUN pip install -r /app/requirements.txt && \
     mkdir -p /var/www/html/bot/static && \
     cp /app/nginx/nginx.conf /etc/nginx/nginx.conf

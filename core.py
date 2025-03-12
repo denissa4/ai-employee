@@ -1,6 +1,7 @@
 import os
-import requests
 import asyncio
+import logging
+import requests
 from llama_index.llms.bedrock import Bedrock
 from llama_index.llms.bedrock_converse import BedrockConverse
 from llama_index.core.agent import ReActAgent
@@ -8,7 +9,7 @@ from llama_index.llms.deepseek import DeepSeek
 from llama_index.core.tools import FunctionTool
 from llama_index.core.memory import ChatMemoryBuffer
 from llama_index.llms.azure_openai import AzureOpenAI
-from llama_index.tools.google import GoogleSearchToolSpec
+from llama_index.tools.google import GoogleSearchToolSpec, GmailToolSpec
 from llama_index.llms.azure_inference import AzureAICompletionsModel
 # Import helper functions
 from helpers.get_tool_envs import load_envs
@@ -17,6 +18,9 @@ from tools.image_recognition import detect_objects
 from tools.direct_line import send_and_receive_message
 from tools.edit_word_doc import map_style_dependencies_with_text, combined_replace
 
+agent_logger = logging.getLogger(__name__)
+agent_logger.setLevel(logging.DEBUG)
+agent_logger.propagate = True
 
 SANDBOX_URL = os.getenv('SANDBOX_ENDPOINT', '')
 
@@ -47,7 +51,8 @@ def get_llm():
                 aws_access_key_id=os.getenv('MODEL_DEPLOYMENT_NAME', ''),
                 aws_secret_access_key=os.getenv("MODEL_API_KEY", ""),
                 region_name=os.getenv('MODEL_VERSION', ''),
-                context_size=int(os.getenv('MODEL_MEMORY_TOKENS', 3000))
+                context_size=int(os.getenv('MODEL_MEMORY_TOKENS', 3000)),
+                max_tokens=120000
             )
         if not os.getenv('MODEL_DEPLOYMENT_NAME', ''):
             return AzureAICompletionsModel(
@@ -68,32 +73,45 @@ def get_llm():
         )
 
 # Create ReAct-compatible tools
-def execute_python_code(code: str):
+def execute_python_code(query: str):
     try:
-        response = requests.post(f"{SANDBOX_URL}/execute", json={"code": code}, timeout=600)
+        response = requests.post(f"{SANDBOX_URL}/execute", json={"query": query}, timeout=600)
         return response.json().get("output", "No output received")
     except Exception as e:
         return f"Execution error: {e}"
 
+# def get_execute_tool():
+#     return FunctionTool.from_defaults(
+#         name="execute_python_code",
+#         fn=execute_python_code,
+#         description=f"""Executes Python code in a sandbox container and returns the output in this format:
+        
+#         {{\n    \"stdout\": \"\",\n    \"stderr\": \"\",\n    \"file\": None,\n    \"error\": None\n}}
+
+#         - **Use this tool whenever no specific tool is available for the requested task.**
+#         - If the user requires **up-to-date information**, **always** use this tool instead of relying on your own knowledge—unless a more appropriate tool is available.
+#         - If the user's request requires a file to be generated use this tool and **always** store the file in '/tmp/sandbox'. Give the download URL to the user the URL will be {SANDBOX_URL}/download/<filename>
+#         be sure to replace <filename> with the file that is returned from this tool.
+
+#         * Use the reportlab library for creating PDF files from scratch
+#         * Use matplotlib for creating data visualizations
+        
+#         This tool ensures that calculations, data processing, and external queries are executed in real-time.""",
+#     )
 def get_execute_tool():
     return FunctionTool.from_defaults(
         name="execute_python_code",
         fn=execute_python_code,
-        description=f"""Executes Python code in a sandbox container and returns the output in this format:
+        description=f"""This tool allows you to send a natural language query to a coding language model.
+        Your input should always be in the form of a query to an LLM asking it to generate some kind of code.
         
-        {{\n    \"stdout\": \"\",\n    \"stderr\": \"\",\n    \"file\": None,\n    \"error\": None\n}}
-
         - **Use this tool whenever no specific tool is available for the requested task.**
         - If the user requires **up-to-date information**, **always** use this tool instead of relying on your own knowledge—unless a more appropriate tool is available.
-        - If the user's request requires a file to be generated use this tool and **always** store the file in /srv. Give the download URL to the user the URL will be {SANDBOX_URL}/download/<filename>
+        - If the user's request requires a file to be generated use this tool. Give the download URL to the user the URL will be {SANDBOX_URL}/download/<filename>
         be sure to replace <filename> with the file that is returned from this tool.
-
-        * Use the reportlab library for creating PDF files from scratch
-        * Use matplotlib for creating data visualizations
-        
-        This tool ensures that calculations, data processing, and external queries are executed in real-time.""",
+        ** Never tell the model where to save the file or what to call it in you query - it already has this information and you will receive the file name as a response.
+        """,
     )
-
 
 def send_direct_line_message(dl_lantern: str, message: str):
     """Sends a message to an Azure Direct Line bot and returns its response."""
@@ -186,7 +204,7 @@ def get_replace_text_in_word_tool():
         {\n    \"stdout\": \"\",\n    \"stderr\": \"\",\n    \"file\": None,\n    \"error\": None\n} send the file URL to the user. **
         """
     )
-    
+
 
 def read_image(query: str, file_path: str, target_area_box=None):
     try:
@@ -202,14 +220,22 @@ def get_read_image_tool():
         This tool takes 3 arguments:
         - 'query' The user's query to the image recognition model
         - 'file_path' The path to the image file
-        - 'target_area_box' (optional) A list of 4 integers which are the x,y coordinates for the top right and bottom left corners of a bounding box
+        - 'target_area_box' (optional) A list of 4 integers which are the x, y coordinates for the top right and bottom left corners of a bounding box
         e.g. [200, 300, 600, 900]
         ** IMPORTANT Do NOT put the bounding box in the user's request in the 'query' argument, always use the 'target_area_box' variable. **
+        ** Do NOT ask the image recognition model if the any objects fit into the bounding box spesified to the user, just put the bounding box
+        coordinates that the user gave you into the target_area_box argument and the tool will do the rest, you will be given a file to send to the user
+        in which they cn varify the bounding box positions. **
+        ** If the user asks you to draw a bounding box around something or in a specific area, you should send this prompt to the image recognition model. **
+        ** IMPORTANT If the user asks if some object(s) are within a bounding box, you should prompt the image recognition model to give you the bounding boxes for these
+        objects. **
+
 
         If the user asks to see if an object is in a certain area on the image, you should expect the user to send a set of 4 numbers corresponding to
         the target_area_box's position. ** This variable should be left out or set to None if the user does not ask for you to look in a specific area. **
 
-        This tool will return a tuple containing a file URL to send to the user and the response from the image recognition model.
+        ** IMPORTANT This tool returns a string output containing the generated file URL (if applicable) and the response text from the image
+        recognition model. **
         """
     )
 
@@ -217,10 +243,8 @@ def get_read_image_tool():
 def get_agent():
     llm = get_llm()
 
-    google_search_tool_spec = GoogleSearchToolSpec(key=os.getenv('GOOGLE_SEARCH_API_KEY'), engine=os.getenv('GOOGLE_SEARCH_ID', ''))
-    # gmail_tool = GmailToolSpec(client_id=os.getenv('GMAIL_CLIENT_ID'),
-    #                             client_secret=os.getenv('GMAIL_CLIENT_SECRET'),
-    #                             refresh_token=os.getenv('GMAIL_REFRESH_TOKEN'))
+    google_search_tool_spec = GoogleSearchToolSpec(key=os.getenv('GOOGLE_SEARCH_API_KEY', ''), engine=os.getenv('GOOGLE_SEARCH_ID', ''))
+    gmail_tool_spec = GmailToolSpec()
 
     execute_tool = get_execute_tool()
     direct_line_tool = get_direct_line_tool()
@@ -228,20 +252,16 @@ def get_agent():
     replace_text_tool = get_replace_text_in_word_tool()
     image_recognition_tool = get_read_image_tool()
     google_search_tool = google_search_tool_spec.to_tool_list()
+    gmail_tool = gmail_tool_spec.to_tool_list()
 
     memory = ChatMemoryBuffer.from_defaults(token_limit=int(os.getenv('MODEL_MEMORY_TOKENS', 3000)))
-
+    tools=[execute_tool, direct_line_tool, style_map_tool, replace_text_tool, image_recognition_tool]
+    tools.extend(google_search_tool + gmail_tool)
     agent = ReActAgent.from_tools(
-        tools=[execute_tool,
-                direct_line_tool,
-                style_map_tool, 
-                replace_text_tool,
-                image_recognition_tool] 
-                + 
-                google_search_tool, 
+        tools=tools,
         llm=llm, 
         verbose=True, 
         memory=memory,
         max_iterations=int(os.getenv('MODEL_MAX_ITERATIONS', 10))
-        )
+    )
     return agent

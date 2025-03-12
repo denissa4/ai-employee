@@ -1,6 +1,9 @@
 from docx import Document
 import base64
 import uuid
+import os
+import requests
+import re
 
 def map_style_dependencies_with_text(document_path):
     """
@@ -63,8 +66,12 @@ def replace_in_paragraphs(paragraphs, replacements):
             target_text = replacement['text'].strip()
             translated_text = replacement['translated_text'].strip()
 
+            # Normalize both target and translated text by removing non-alphanumeric characters
+            target_alphanumeric = re.sub(r'[^a-zA-Z0-9]', '', target_text)
+            translated_alphanumeric = re.sub(r'[^a-zA-Z0-9]', '', translated_text)
+
             # Update text without clearing the paragraph (preserving images)
-            if full_text == target_text:
+            if target_alphanumeric == re.sub(r'[^a-zA-Z0-9]', '', full_text):
                 # Modify text in runs instead of clearing
                 remaining_text = translated_text
                 for run in paragraph.runs:
@@ -81,10 +88,9 @@ def replace_in_paragraphs(paragraphs, replacements):
                         
             else:
                 for run in paragraph.runs:
-                    if run.text and target_text in run.text:
-                        run.text = run.text.replace(target_text, translated_text)
-
-
+                    if run.text:
+                        # Use regex to find and replace alphanumeric content
+                        run.text = re.sub(target_alphanumeric, translated_alphanumeric, run.text)
 
 
 def combined_replace(document_path, replacements):
@@ -169,7 +175,10 @@ with open(file_path, "wb") as f:
     f.write(doc_bytes)
     """
 
+    SANDBOX_URL = os.getenv('SANDBOX_ENDPOINT', '')
     # Execute remotely and return result
-    from core import execute_python_code
-    res = execute_python_code(code)
-    return res
+    response = requests.post(f"{SANDBOX_URL}/upload", json={"code": code}, timeout=30)
+    r = response.json().get("output", "No output received")
+    if isinstance(r, dict):
+        r = r["files"]
+    return r

@@ -1,20 +1,23 @@
 import os
 import logging
+# Set up logging
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
+logging.basicConfig(level=logging.DEBUG)
+
 import asyncio
 from quart import Quart, request, jsonify
 from core import get_agent
 # Import helper functions
 from helpers.attachments_handler import download_and_save
 
-logging.basicConfig(level=logging.DEBUG)
-logging.getLogger("azure").setLevel(logging.ERROR)  # Suppress Azure SDK logs
+logging.getLogger("azure").setLevel(logging.ERROR)  # Suppress Azure SDK and AWS logs
+logging.getLogger("botocore").setLevel(logging.ERROR)
+logging.getLogger("boto3").setLevel(logging.ERROR)
+logging.getLogger("s3transfer").setLevel(logging.ERROR)
 
 # Initialize the app
 app = Quart(__name__)
 
-# Set up logging
-DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
-logging.basicConfig(level=logging.DEBUG)
 app.logger.setLevel(logging.DEBUG)
 
 # Initialize the agent

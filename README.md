@@ -44,7 +44,7 @@ AI-Employee is your ultimate personal assistant, seamlessly integrating all of N
 
 To run in your local environment follow these steps:
 
-* Comment out: 
+1. Comment out: 
     ```
     // const tokenCredential = new DefaultAzureCredential();
     // const accessToken = await tokenCredential.getToken("https://management.azure.com/.default");
@@ -56,10 +56,14 @@ To run in your local environment follow these steps:
     ```
     - from `bot/src/index.ts`
 
-* run: `docker build -t ai-employee .`
+2. run: `docker build -t ai-employee .`
 
-* run: `docker run --rm -p 8080:80 --env-file .env ai-employee`
+3. run: `docker run --rm -p 8080:80 --env-file .env ai-employee`
 
-* use MS Bot Emulator on address `http://localhost:8080/api/messages`
+4. use MS Bot Emulator on address `http://localhost:8080/api/messages`
 
-* or, add environment variables: `MICROSOFT_APP_ID` and `MICROSOFT_APP_PASSWORD` to use an external MS bot.
+5. or, add environment variables: `MICROSOFT_APP_ID` and `MICROSOFT_APP_PASSWORD` to use an external MS bot.
+
+_Note: To utilize the full capabilities of the application it is recommended that you run the sandbox environment application alongside AI-Employee (https://github.com/denissa4/ai-employee-sandbox)_ 
+
+
