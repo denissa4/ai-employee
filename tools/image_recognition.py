@@ -110,8 +110,8 @@ image.save(file_path)
     """
     SANDBOX_URL = os.getenv('SANDBOX_ENDPOINT', '')
     # Execute remotely and return result
-    response = requests.post(f"{SANDBOX_URL}/upload", json={"code": code}, timeout=30)
-    r = response.json().get("output", "No output received")
+    res = requests.post(f"{SANDBOX_URL}/upload", json={"code": code}, timeout=30)
+    r = res.json().get("output", "No output received")
     if isinstance(r, dict):
         r = r["files"]
 

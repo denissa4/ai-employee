@@ -9,7 +9,7 @@ from llama_index.llms.deepseek import DeepSeek
 from llama_index.core.tools import FunctionTool
 from llama_index.core.memory import ChatMemoryBuffer
 from llama_index.llms.azure_openai import AzureOpenAI
-from llama_index.tools.google import GoogleSearchToolSpec, GmailToolSpec
+from llama_index.tools.google import GoogleSearchToolSpec
 from llama_index.llms.azure_inference import AzureAICompletionsModel
 # Import helper functions
 from helpers.get_tool_envs import load_envs
@@ -17,6 +17,7 @@ from helpers.get_tool_envs import load_envs
 from tools.image_recognition import detect_objects
 from tools.direct_line import send_and_receive_message
 from tools.edit_word_doc import map_style_dependencies_with_text, combined_replace
+from tools.email_tools import send, read
 
 agent_logger = logging.getLogger(__name__)
 agent_logger.setLevel(logging.DEBUG)
@@ -26,7 +27,7 @@ SANDBOX_URL = os.getenv('SANDBOX_ENDPOINT', '')
 
 # Initialize the LLM
 def get_llm():
-    if "deepseek" in os.getenv('MODEL_NAME', '').lower():
+    if "deepseek" in os.getenv('MODEL_NAME', '').lower() and not "AWS-" in os.getenv('MODEL_NAME', ''):
         if "legacy" in os.getenv('MODEL_NAME', '').lower():
             # Legacy DeepSeek method
             return DeepSeek(
@@ -35,24 +36,35 @@ def get_llm():
                 api_base=os.getenv('MODEL_ENDPOINT', ''),
                 prompt=os.getenv('MODEL_SYSTEM_PROMPT', None),
                 timeout=float(os.getenv('MODEL_TIMEOUT', 300.00)),
+                max_tokens=int(os.getenv('MODEL_MAX_TOKENS', 8000))
             )
         return AzureAICompletionsModel(
             endpoint=os.getenv('MODEL_ENDPOINT', ''),
             credential=os.getenv("MODEL_API_KEY", ""),
             model_name=os.getenv('MODEL_NAME', ''),
             timeout=float(os.getenv('MODEL_TIMEOUT', 300.00)),
-            system_prompt=os.getenv('MODEL_SYSTEM_PROMPT', None)
+            system_prompt=os.getenv('MODEL_SYSTEM_PROMPT', None),
+            max_tokens=int(os.getenv('MODEL_MAX_TOKENS', 8000))
         )
     else:
         if "AWS-" in os.getenv('MODEL_NAME', ''):
             model = os.getenv('MODEL_NAME').replace('AWS-', '')
+            if "deepseek" in model.lower():
+                return BedrockConverse(
+                    model=model,
+                    aws_access_key_id=os.getenv('MODEL_DEPLOYMENT_NAME', ''),
+                    aws_secret_access_key=os.getenv("MODEL_API_KEY", ""),
+                    region_name=os.getenv('MODEL_VERSION', ''),
+                    context_size=int(os.getenv('MODEL_MEMORY_TOKENS', 3000)),
+                    max_tokens=int(os.getenv('MODEL_MAX_TOKENS', 8000))
+                )
             return Bedrock(
                 model=model,
                 aws_access_key_id=os.getenv('MODEL_DEPLOYMENT_NAME', ''),
                 aws_secret_access_key=os.getenv("MODEL_API_KEY", ""),
                 region_name=os.getenv('MODEL_VERSION', ''),
                 context_size=int(os.getenv('MODEL_MEMORY_TOKENS', 3000)),
-                max_tokens=120000
+                max_tokens=int(os.getenv('MODEL_MAX_TOKENS', 8000))
             )
         if not os.getenv('MODEL_DEPLOYMENT_NAME', ''):
             return AzureAICompletionsModel(
@@ -60,7 +72,8 @@ def get_llm():
                 credential=os.getenv("MODEL_API_KEY", ""),
                 model_name=os.getenv('MODEL_NAME', ''),
                 timeout=float(os.getenv('MODEL_TIMEOUT', 300.00)),
-                system_prompt=os.getenv('MODEL_SYSTEM_PROMPT', None)
+                system_prompt=os.getenv('MODEL_SYSTEM_PROMPT', None),
+                max_tokens=int(os.getenv('MODEL_MAX_TOKENS', 8000))
             )
         return AzureOpenAI(
             model=os.getenv('MODEL_NAME', ''),
@@ -70,6 +83,7 @@ def get_llm():
             api_version=os.getenv('MODEL_VERSION', ''),
             system_prompt=os.getenv('MODEL_SYSTEM_PROMPT', None),
             timeout=float(os.getenv('MODEL_TIMEOUT', 300.00)),
+            max_tokens=int(os.getenv('MODEL_MAX_TOKENS', 8000))
         )
 
 # Create ReAct-compatible tools
@@ -79,25 +93,7 @@ def execute_python_code(query: str):
         return response.json().get("output", "No output received")
     except Exception as e:
         return f"Execution error: {e}"
-
-# def get_execute_tool():
-#     return FunctionTool.from_defaults(
-#         name="execute_python_code",
-#         fn=execute_python_code,
-#         description=f"""Executes Python code in a sandbox container and returns the output in this format:
-        
-#         {{\n    \"stdout\": \"\",\n    \"stderr\": \"\",\n    \"file\": None,\n    \"error\": None\n}}
-
-#         - **Use this tool whenever no specific tool is available for the requested task.**
-#         - If the user requires **up-to-date information**, **always** use this tool instead of relying on your own knowledge—unless a more appropriate tool is available.
-#         - If the user's request requires a file to be generated use this tool and **always** store the file in '/tmp/sandbox'. Give the download URL to the user the URL will be {SANDBOX_URL}/download/<filename>
-#         be sure to replace <filename> with the file that is returned from this tool.
-
-#         * Use the reportlab library for creating PDF files from scratch
-#         * Use matplotlib for creating data visualizations
-        
-#         This tool ensures that calculations, data processing, and external queries are executed in real-time.""",
-#     )
+    
 def get_execute_tool():
     return FunctionTool.from_defaults(
         name="execute_python_code",
@@ -112,6 +108,7 @@ def get_execute_tool():
         ** Never tell the model where to save the file or what to call it in you query - it already has this information and you will receive the file name as a response.
         """,
     )
+
 
 def send_direct_line_message(dl_lantern: str, message: str):
     """Sends a message to an Azure Direct Line bot and returns its response."""
@@ -165,7 +162,8 @@ def get_style_map_tool():
         
         - You should use this tool to analyze, or 'read' a Word document.
         - If the user asks you to translate a Word document, you should use this tool to get the document's style and structure and you should add to the translation
-        to the 'translated_text' key in each dictionary, then pass this edited list of dictionaries to the replace_text_in_word_document tool's 'replacements' argument.
+        to the empty string in each list, then pass this edited list of lists to the replace_text_in_word_document tool's 'replacements' argument.
+        ** It is important that you preserve all of the original text exactly as it appears in the style map, do not change punctuation of characters at all. **
         - You should translate the document yourself instead of relying on another tool.
         - ** IMPORTANT The relevant translations should be completed in a single step **.
         """
@@ -223,9 +221,7 @@ def get_read_image_tool():
         - 'target_area_box' (optional) A list of 4 integers which are the x, y coordinates for the top right and bottom left corners of a bounding box
         e.g. [200, 300, 600, 900]
         ** IMPORTANT Do NOT put the bounding box in the user's request in the 'query' argument, always use the 'target_area_box' variable. **
-        ** Do NOT ask the image recognition model if the any objects fit into the bounding box spesified to the user, just put the bounding box
-        coordinates that the user gave you into the target_area_box argument and the tool will do the rest, you will be given a file to send to the user
-        in which they cn varify the bounding box positions. **
+        ** If the user asks if certain objects fit into a bounding box then you should query the model to put bounding boxes around these objects. **
         ** If the user asks you to draw a bounding box around something or in a specific area, you should send this prompt to the image recognition model. **
         ** IMPORTANT If the user asks if some object(s) are within a bounding box, you should prompt the image recognition model to give you the bounding boxes for these
         objects. **
@@ -239,12 +235,53 @@ def get_read_image_tool():
         """
     )
 
+
+def send_email_message(subject: str, recipient: str, message: str, attachments=None):
+    try:
+        return send(subject, recipient, message, attachments)
+    except Exception as e:
+        return f"There was an error: {e}"
+
+def get_send_email_message_tool():
+        return FunctionTool.from_defaults(
+        name="send_email_message",
+        fn=send_email_message,
+        description="""Use this tool to send an email.
+        This tool takes the following arguments:
+
+        Args:
+            - subject (str): The subject of the email.
+            - recipient (str): The email address of the recipient.
+            - message (str): The body message of the email (can include HTML).
+            - attachments (list): Optional list of file paths to attach to the email.
+            
+        The message field has content type set to HTML so you can use valid HTML here to form your message.
+        This tool will return a success message if the email sent successfully or an error message if something went wrong."""
+    )
+
+
+def read_email_messages(number_of_emails: int):
+    try:
+        return read(number_of_emails)
+    except Exception as e:
+        return f"There was an error: {e}"
+
+def get_read_email_messages():
+        return FunctionTool.from_defaults(
+        name="read_email_messages",
+        fn=read_email_messages,
+        description="""Use this tool to read the user's emails.
+        This tool takes a single argument 'number_of_emails' which is the number of emails to read.
+            
+        This tool will return the latest n emails' recepient, subject and body content."""
+    )
+
+
 # Set up agent with tools
 def get_agent():
     llm = get_llm()
 
     google_search_tool_spec = GoogleSearchToolSpec(key=os.getenv('GOOGLE_SEARCH_API_KEY', ''), engine=os.getenv('GOOGLE_SEARCH_ID', ''))
-    gmail_tool_spec = GmailToolSpec()
 
     execute_tool = get_execute_tool()
     direct_line_tool = get_direct_line_tool()
@@ -252,11 +289,11 @@ def get_agent():
     replace_text_tool = get_replace_text_in_word_tool()
     image_recognition_tool = get_read_image_tool()
     google_search_tool = google_search_tool_spec.to_tool_list()
-    gmail_tool = gmail_tool_spec.to_tool_list()
+    send_email_tool = get_send_email_message_tool()
 
     memory = ChatMemoryBuffer.from_defaults(token_limit=int(os.getenv('MODEL_MEMORY_TOKENS', 3000)))
-    tools=[execute_tool, direct_line_tool, style_map_tool, replace_text_tool, image_recognition_tool]
-    tools.extend(google_search_tool + gmail_tool)
+    tools=[execute_tool, direct_line_tool, style_map_tool, replace_text_tool, image_recognition_tool, send_email_tool]
+    tools.extend(google_search_tool)
     agent = ReActAgent.from_tools(
         tools=tools,
         llm=llm, 

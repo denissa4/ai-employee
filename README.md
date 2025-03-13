@@ -15,6 +15,7 @@ AI-Employee is your ultimate personal assistant, seamlessly integrating all of N
 * MODEL_SYSTEM_PROMPT - _Persistent prompt to help guide the LLM_
 * MODEL_TIMEOUT - _Timeout in seconds that the LLM will take to complete the request (default: 300)_
 * MODEL_MEMORY_TOKENS - _Total number of chat history tokens the model will store for memory (default: 3000)_
+* MODEL_MAX_TOKENS - _The maximum number of tokens the model will handle (default: 8000)_
 * MODEL_MAX_ITERATIONS - _Total number of iterations the model will take before giving up (default: 10)_
 
 ### Direct Line tools
@@ -38,6 +39,8 @@ AI-Employee is your ultimate personal assistant, seamlessly integrating all of N
 * MicrosoftAppType - _Type of application used for authentication (default: UserAssignedMSI)_
 
 ### Other variables
+* EMAIL_ADDRESS - _Email address for sending emails_
+* EMAIL_PASSWORD - _Email password for sending emails_
 * DEBUG - _For debugging logs (default: False)_
 
 ## Run Locally
