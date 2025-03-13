@@ -254,7 +254,11 @@ def get_send_email_message_tool():
             - recipient (str): The email address of the recipient.
             - message (str): The body message of the email (can include HTML).
             - attachments (list): Optional list of file paths to attach to the email.
-            
+        Please do NOT use the attachments argument yet (set it to None) as this has not been integrated.
+        
+        ** IMPORTANT - When sending an email with files make sure you form the full URL to the sandbox like this: {SANDBOX_URL}/download/<filename>
+        being sure to replace <filename> with the actual file name and be sure to omit the /srv/ directory from the filename. Attach this to the body
+        of the email as a hyperlink. **
         The message field has content type set to HTML so you can use valid HTML here to form your message.
         This tool will return a success message if the email sent successfully or an error message if something went wrong."""
     )
@@ -266,7 +270,7 @@ def read_email_messages(number_of_emails: int):
     except Exception as e:
         return f"There was an error: {e}"
 
-def get_read_email_messages():
+def get_read_email_messages_tool():
         return FunctionTool.from_defaults(
         name="read_email_messages",
         fn=read_email_messages,
@@ -288,11 +292,12 @@ def get_agent():
     style_map_tool = get_style_map_tool()
     replace_text_tool = get_replace_text_in_word_tool()
     image_recognition_tool = get_read_image_tool()
-    google_search_tool = google_search_tool_spec.to_tool_list()
     send_email_tool = get_send_email_message_tool()
+    read_email_tool = get_read_email_messages_tool()
+    google_search_tool = google_search_tool_spec.to_tool_list()
 
     memory = ChatMemoryBuffer.from_defaults(token_limit=int(os.getenv('MODEL_MEMORY_TOKENS', 3000)))
-    tools=[execute_tool, direct_line_tool, style_map_tool, replace_text_tool, image_recognition_tool, send_email_tool]
+    tools=[execute_tool, direct_line_tool, style_map_tool, replace_text_tool, image_recognition_tool, send_email_tool, read_email_tool]
     tools.extend(google_search_tool)
     agent = ReActAgent.from_tools(
         tools=tools,
