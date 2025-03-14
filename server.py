@@ -58,7 +58,7 @@ async def prompt():
             return jsonify({"error": "user_id is required"}), 400
 
         if DEBUG:
-            app.logger.info(f"USER ID: {user_id}, CHANNEL ID: {channel_id}, PROMPT: {prompt}")
+            app.logger.info(f"USER ID: {user_id}\nCHANNEL ID: {channel_id}\nPROMPT: {prompt}")
 
         # Ensure user authentication
         user_session = await get_user_session(user_id)
@@ -73,7 +73,7 @@ async def prompt():
             return jsonify({
                 "response": "Please authenticate to access your emails.",
                 "oauth_url": f"https://login.microsoftonline.com/{TENANT_ID}/oauth2/v2.0/authorize"
-                             f"?client_id={CLIENT_ID}&response_type=code&redirect_uri={REDIRECT_URI}&scope=User.Read Mail.Read&prompt=consent"
+                             f"?client_id={CLIENT_ID}&response_type=code&redirect_uri={REDIRECT_URI}&scope=User.Read%20Mail.Read&prompt=consent"
             }), 200
 
         access_token = user_session["access_token"]
