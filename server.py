@@ -62,6 +62,8 @@ async def prompt():
 
         # Ensure user authentication
         user_session = await get_user_session(user_id)
+        if DEBUG:
+            app.logger.info(f"USER SESSION: {user_session}\n SESSION STORAGE: {user_sessions}")
 
         if not user_session or "access_token" not in user_session:
             CLIENT_ID = os.getenv("CLIENT_ID")
@@ -188,6 +190,9 @@ async def callback():
 
     token_response = await get_access_token(code)
 
+    if DEBUG:
+        app.logger.info(f"TOKEN RESPONSE: {token_response}")
+
     # Check if we got an access token
     if "access_token" not in token_response:
         return jsonify({"error": "Failed to get access token", "details": token_response}), 400
@@ -208,5 +213,8 @@ async def callback():
             "access_token": access_token,
             "email": user_email
         }
+    
+    if DEBUG:
+        app.logger.info(f"User session saved: {user_sessions[user_id]}")
 
     return jsonify({"message": "Authentication successful!", "user_id": user_id, "email": user_email})
