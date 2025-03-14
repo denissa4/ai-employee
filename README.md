@@ -67,6 +67,6 @@ To run in your local environment follow these steps:
 
 5. or, add environment variables: `MICROSOFT_APP_ID` and `MICROSOFT_APP_PASSWORD` to use an external MS bot.
 
-_Note: To utilize the full capabilities of the application it is recommended that you run the sandbox environment application alongside AI-Employee (https://github.com/denissa4/ai-employee-sandbox)_ 
+> **Note:**  _To utilize the full capabilities of the application it is recommended that you run the sandbox environment application alongside AI-Employee (https://github.com/denissa4/ai-employee-sandbox)_
 
 

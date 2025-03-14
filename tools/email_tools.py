@@ -60,43 +60,29 @@ def send(subject, recipient, message, attachments=None):
         return f"Failed to send email: {e}"
 
 
-def read(number_of_emails: int):
+def read(access_token: str, number_of_emails: int):
     try:
-        # Microsoft Graph API endpoints
-        GRAPH_API_URL = 'https://graph.microsoft.com/v1.0'
+        GRAPH_API_URL = "https://graph.microsoft.com/v1.0"
 
-        # Managed Identity Credential (this will automatically use the managed identity of the Azure resource)
-        credential = ManagedIdentityCredential()
+        if not access_token:
+            return "Missing access token. Please authenticate."
 
-        def get_graph_access_token():
-            # Get the access token for Microsoft Graph API using Managed Identity
-            token = credential.get_token("https://graph.microsoft.com/.default")
-            if not token:
-                return None
-            return token.token
-        
-        def read_emails():
-            token = get_graph_access_token()
-            if not token:
-                return "Unable to authenticate with Microsoft Graph."
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        }
 
-            # Set up the authorization header with the access token
-            headers = {
-                'Authorization': f'Bearer {token}',
-                'Content-Type': 'application/json'
-            }
+        response = requests.get(f"{GRAPH_API_URL}/me/messages?$top={number_of_emails}", headers=headers)
 
-            # Make a request to Microsoft Graph API to read the first 5 emails from the inbox
-            response = requests.get(f"{GRAPH_API_URL}/me/messages?$top={number_of_emails}", headers=headers)
-            messages = []
-            if response.status_code == 200:
-                emails = response.json()
-                for email in emails['value']:
-                    messages.append(f"Subject: {email['subject']} \n From: {email['from']['emailAddress']['address']} \n Body Preview: {email['body']['content']}")
-            else:
-                return f"Error fetching emails: {response.status_code} {response.text}"
-            return messages
-        
-        return read_emails()
+        if response.status_code == 200:
+            emails = response.json()
+            messages = [
+                f"Subject: {email['subject']}\nFrom: {email['from']['emailAddress']['address']}\nBody Preview: {email['bodyPreview']}"
+                for email in emails.get("value", [])
+            ]
+            return messages if messages else ["No emails found."]
+        else:
+            return f"Error fetching emails: {response.status_code} {response.text}"
+
     except Exception as e:
         return f"Error: {e}"

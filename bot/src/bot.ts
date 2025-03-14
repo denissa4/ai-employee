@@ -51,10 +51,15 @@ class Bot extends ActivityHandler {
                 timeout: 600000
             });
 
+            if (response.data.oauth_url) {
+                // If there's an oauth_url in the response, prompt the user to authenticate
+                return `Please authenticate by clicking the following link: ${response.data.oauth_url}`;
+            }
+
             return response.data.response;
         } catch (error) {
             console.error('Error sending message to Flask:', error);
-            throw new Error('Error interacting with Flask app.');
+            throw new Error(`Error interacting with Flask app: ${error.message || error}`);
         }
     }
 }

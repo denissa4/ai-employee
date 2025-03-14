@@ -264,9 +264,9 @@ def get_send_email_message_tool():
     )
 
 
-def read_email_messages(number_of_emails: int):
+def read_email_messages(access_token: str, number_of_emails: int):
     try:
-        return read(number_of_emails)
+        return read(access_token, number_of_emails)
     except Exception as e:
         return f"There was an error: {e}"
 
@@ -275,7 +275,9 @@ def get_read_email_messages_tool():
         name="read_email_messages",
         fn=read_email_messages,
         description="""Use this tool to read the user's emails.
-        This tool takes a single argument 'number_of_emails' which is the number of emails to read.
+        This tool takes two arguments:
+            - the access token of the user.
+            - the numbder of emails to read.
             
         This tool will return the latest n emails' recepient, subject and body content."""
     )
