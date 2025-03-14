@@ -74,7 +74,7 @@ async def prompt():
                 "response": "Please authenticate to access your emails.",
                 "oauth_url": f"https://login.microsoftonline.com/{TENANT_ID}/oauth2/v2.0/authorize"
                              f"?client_id={CLIENT_ID}&response_type=code&redirect_uri={REDIRECT_URI}&scope=User.Read Mail.Read&prompt=consent"
-            }), 401
+            }), 200
 
         access_token = user_session["access_token"]
         user_email = user_session.get("email", "Unknown")
