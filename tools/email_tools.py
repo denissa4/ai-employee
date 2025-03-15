@@ -5,13 +5,29 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
 import os
+import sqlite3
 # Reading emails
 from azure.identity import ManagedIdentityCredential
 import requests
 
-
 EMAIL_ADDRESS = os.getenv('EMAIL_ADDRESS', '')
 EMAIL_PASSWORD = os.getenv('EMAIL_PASSWORD', '')
+
+CLIENT_ID = os.getenv("CLIENT_ID", "")
+REDIRECT_URI = os.getenv("REDIRECT_URI", "")
+TENANT_ID = os.getenv('TENANT_ID', '')
+
+def get_access_token(user_id: str):
+    conn = sqlite3.connect("ai_employee.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT access_token FROM users WHERE user_id = ?", (user_id,))
+    result = cursor.fetchone()
+    conn.close()
+    if result:
+        return result[0]
+    else:
+        return None
+
 
 def send(subject, recipient, message, attachments=None):
     '''
@@ -60,12 +76,22 @@ def send(subject, recipient, message, attachments=None):
         return f"Failed to send email: {e}"
 
 
-def read(access_token: str, number_of_emails: int):
+def read(user_id: str, number_of_emails: int):
     try:
         GRAPH_API_URL = "https://graph.microsoft.com/v1.0"
 
+        if not user_id:
+            return "Error: Missing user ID."
+        
+        access_token = get_access_token(user_id)
+
         if not access_token:
-            return "Missing access token. Please authenticate."
+            oauth_url = (
+                f"https://login.microsoftonline.com/{TENANT_ID}/oauth2/v2.0/authorize"
+                f"?client_id={CLIENT_ID}&response_type=code&redirect_uri={REDIRECT_URI}"
+                f"&scope=User.Read%20Mail.Read&prompt=consent&state={user_id}"
+            )
+            return f"The user isn't authenticated, please provide them with this URL: {oauth_url} and tell them to let you know when they have authenticated so you can carry on."
 
         headers = {
             "Authorization": f"Bearer {access_token}",
