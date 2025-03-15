@@ -236,9 +236,9 @@ def get_read_image_tool():
     )
 
 
-def send_email_message(subject: str, recipient: str, message: str, attachments=None):
+def send_email_message(user_id: str, subject: str, recipient: str, message: str):
     try:
-        return send(subject, recipient, message, attachments)
+        return send(user_id, subject, recipient, message)
     except Exception as e:
         return f"There was an error: {e}"
 
@@ -250,11 +250,10 @@ def get_send_email_message_tool():
         This tool takes the following arguments:
 
         Args:
+            - user_id (str): The user_id of the user.
             - subject (str): The subject of the email.
             - recipient (str): The email address of the recipient.
             - message (str): The body message of the email (can include HTML).
-            - attachments (list): Optional list of file paths to attach to the email.
-        Please do NOT use the attachments argument yet (set it to None) as this has not been integrated.
         
         ** IMPORTANT - When sending an email with files make sure you form the full URL to the sandbox like this: {SANDBOX_URL}/download/<filename>
         being sure to replace <filename> with the actual file name and be sure to omit the /srv/ directory from the filename. Attach this to the body
@@ -264,9 +263,9 @@ def get_send_email_message_tool():
     )
 
 
-def read_email_messages(access_token: str, number_of_emails: int):
+def read_email_messages(user_id: str, number_of_emails: int):
     try:
-        return read(access_token, number_of_emails)
+        return read(user_id, number_of_emails)
     except Exception as e:
         return f"There was an error: {e}"
 
@@ -276,8 +275,8 @@ def get_read_email_messages_tool():
         fn=read_email_messages,
         description="""Use this tool to read the user's emails.
         This tool takes two arguments:
-            - the access token of the user.
-            - the numbder of emails to read.
+            - the user_id of the user.
+            - the number of emails to read.
             
         This tool will return the latest n emails' recepient, subject and body content."""
     )
